@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama de Arquitectura MP</title>
+    <style>
+        /* --- General & Reset --- */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 30px 20px; /* Más padding vertical general */
+            background-color: #f8f9fa; /* Un gris muy claro */
+            color: #343a40; /* Gris oscuro para texto */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased; /* Puede ayudar a la legibilidad del texto escalado */
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* --- Diagram Container --- */
+        .architecture-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            width: 100%;
+            max-width: 950px; /* Un poco más ancho */
+        }
+
+        .architecture-diagram > h1 {
+            font-size: 2em; /* Más grande */
+            font-weight: 600;
+            color: #0056b3; /* Azul oscuro MP */
+            margin-bottom: 40px;
+            text-align: center;
+            border-bottom: 3px solid #007bff; /* Azul más brillante */
+            padding-bottom: 15px;
+            width: auto; /* Ajuste al contenido */
+            display: inline-block; /* Para que el borde se ajuste */
+        }
+
+        /* --- Layers --- */
+        .layer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 25px 20px; /* Mayor padding */
+            border-radius: 12px; /* Bordes más redondeados */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08); /* Sombra más suave */
+            margin-bottom: 0; /* Los conectores manejan el espacio */
+        }
+
+        .user-layer { background-color: #e9f5ff; /* Azul muy pálido */ }
+        .client-layer { background-color: #e6ffed; /* Verde muy pálido */ }
+        .server-host-layer {
+            background-color: #fceeff; /* Lavanda muy pálido */
+            border: 2px dashed #c081d6; /* Borde más pronunciado */
+        }
+
+        /* --- Group Headers --- */
+        .group-header { /* Para títulos como "Navegador del Cliente", "Servidor / Docker Host" */
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #495057; /* Gris medio */
+            margin-bottom: 25px;
+            align-self: stretch;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6; /* Borde sutil */
+        }
+
+        .component-group-title { /* Para "Contenedor Docker: X" */
+            font-size: 1em;
+            font-weight: 600;
+            color: #5a6268;
+            margin-bottom: 12px;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* --- Components (Cards) --- */
+        .component {
+            background-color: #ffffff;
+            border: 1px solid #ced4da; /* Borde gris claro */
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px; /* Reducido ligeramente para acomodar grupos */
+            text-align: center;
+            min-width: 220px; /* Ligeramente más anchos */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px; /* Espacio entre elementos internos */
+        }
+
+        .component .icon {
+            font-size: 2.5em; /* Iconos más grandes */
+            margin-bottom: 8px;
+            color: #007bff; /* Iconos en azul por defecto */
+        }
+        .user .icon { color: #17a2b8; } /* Cian */
+        .frontend .icon { color: #28a745; } /* Verde */
+        .backend .icon { color: #ffc107; } /* Amarillo */
+        .database .icon { color: #dc3545; } /* Rojo */
+        .webserver .icon { color: #6c757d; } /* Gris */
+        .orchestrator .icon { color: #17a2b8; } /* Cian (como Docker) */
+
+
+        .component .title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #212529; /* Casi negro */
+        }
+
+        .component .tech-tag {
+            font-size: 0.85em;
+            font-weight: 500; /* Ligeramente menos bold */
+            color: #0056b3;
+            background-color: #e0efff;
+            padding: 4px 10px;
+            border-radius: 15px; /* Píldora */
+            display: inline-block;
+        }
+
+        .component .details {
+            font-size: 0.85em;
+            color: #6c757d; /* Gris secundario */
+        }
+
+        /* --- Connectors --- */
+        .connector-vertical {
+            width: 3px; /* Más delgado */
+            height: 40px; /* Más espacio */
+            background-color: #adb5bd; /* Gris más claro */
+            margin: 0 auto;
+            position: relative;
+        }
+        .connector-vertical::after { /* Flecha */
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -1px;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-top: 9px solid #adb5bd;
+        }
+
+        .connector-horizontal {
+            min-width: 50px; /* Para que la flecha sea visible si están muy juntos */
+            height: 3px;
+            background-color: #adb5bd;
+            align-self: center;
+            position: relative;
+            margin: 0 5px; /* Pequeño margen para que no toque los cards */
+        }
+        .connector-horizontal::after { /* Flecha */
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -1px;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 7px solid transparent;
+            border-bottom: 7px solid transparent;
+            border-left: 9px solid #adb5bd;
+        }
+
+        /* --- Docker Specific Layout --- */
+        .docker-compose-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px; /* Más espacio antes de los contenedores */
+        }
+
+        .docker-containers-area {
+            display: flex;
+            flex-direction: column; /* Para apilar las filas de contenedores */
+            align-items: center;
+            gap: 20px; /* Espacio entre filas de contenedores */
+            width: 100%;
+        }
+
+        .docker-container-row {
+            display: flex;
+            justify-content: center;
+            align-items: stretch; /* Para que los component-group tengan la misma altura si es necesario */
+            flex-wrap: wrap;
+            gap: 10px; /* Espacio entre grupos en una fila */
+            width: 100%;
+        }
+        
+        .component-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            flex-grow: 1; /* Para que ocupen espacio disponible */
+            min-width: 250px; /* Para evitar que se encojan demasiado */
+        }
+        /* Ajuste para el conector horizontal entre Backend y BD */
+        .docker-container-row .component-group {
+            align-items: center; /* Centra el card dentro del grupo */
+        }
+
+
+        /* --- Internal Connections Text --- */
+        .internal-connections {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            width: 90%;
+            text-align: center;
+        }
+        .internal-connections .connection-note {
+            font-size: 0.9em;
+            color: #495057;
+            margin: 6px 0;
+            font-style: italic;
+        }
+
+        /* --- Print Styles --- */
+        @media print {
+            /* Reglas generales para impresión */
+            @page {
+                size: A4 portrait; /* O 'letter portrait'. Define el tamaño de página explícitamente */
+                margin: 0.75cm;    /* Márgenes de página más pequeños */
+            }
+
+            body {
+                padding: 0 !important; /* Sin padding en el body para impresión */
+                margin: 0 !important;
+                background-color: #fff !important;
+                color: #000 !important;
+                font-size: 8pt; /* Tamaño de fuente base más pequeño para impresión */
+                -webkit-print-color-adjust: exact; /* Fuerza la impresión de colores de fondo/texto si es necesario, aunque lo evitamos */
+                print-color-adjust: exact;
+                width: 100%; /* Asegura que el body ocupe el ancho de la página */
+                overflow: visible !important; /* Evitar barras de scroll innecesarias */
+            }
+
+            .architecture-diagram {
+                width: 100% !important; /* Que ocupe todo el ancho disponible dentro de los márgenes de @page */
+                max-width: none !important; /* Ignorar el max-width de pantalla */
+                box-shadow: none !important;
+                margin: 0 auto;
+                padding: 0;
+                /* Descomentar la siguiente línea si todo lo demás falla para forzarlo a una página */
+                /* transform: scale(0.75); transform-origin: top left; */ /* Ajustar escala según necesidad */
+            }
+
+            .architecture-diagram > h1 {
+                font-size: 14pt; /* Reducir para impresión */
+                color: #000 !important;
+                border-bottom: 2px solid #000 !important;
+                margin-bottom: 15px; /* Menos margen */
+                padding-bottom: 5px;
+            }
+
+            .layer, .component {
+                background-color: #fff !important;
+                color: #000 !important;
+                box-shadow: none !important;
+                border: 1px solid #666 !important; /* Bordes más visibles y simples */
+                padding: 8px; /* Menos padding */
+                margin: 5px;  /* Menos margen */
+                border-radius: 4px; /* Menos redondeo */
+                page-break-inside: avoid; /* Intentar mantener estos elementos en una sola página */
+            }
+            .server-host-layer {
+                border-style: solid !important;
+                border-color: #333 !important;
+                border-width: 1.5px !important;
+                padding: 10px;
+            }
+
+            .group-header, .component-group-title {
+                color: #000 !important;
+                border-bottom-color: #999 !important;
+                font-size: 9pt;
+                font-weight: bold;
+                margin-bottom: 8px;
+                padding-bottom: 3px;
+            }
+            .component-group-title {
+                margin-bottom: 5px;
+            }
+
+
+            .component {
+                min-width: 0 !important; /* Permitir que los componentes se encojan */
+                width: auto; /* Dejar que el contenido y flexbox decidan */
+                padding: 6px;
+                gap: 4px;
+            }
+
+            .component .icon {
+                color: #333 !important;
+                font-size: 1.5em; /* Iconos más pequeños */
+                margin-bottom: 3px;
+            }
+
+            .component .title {
+                font-size: 8.5pt;
+                font-weight: bold;
+            }
+
+            .component .tech-tag {
+                background-color: #eee !important;
+                color: #000 !important;
+                border: 1px solid #ccc !important;
+                padding: 1px 4px;
+                font-size: 7pt;
+                border-radius: 3px;
+            }
+
+            .component .details {
+                color: #333 !important;
+                font-size: 7pt;
+            }
+
+            .connector-vertical, .connector-horizontal {
+                background-color: #555 !important;
+                width: 2px;
+                height: 20px; /* Conectores más cortos */
+            }
+            .connector-vertical::after { border-top-color: #555 !important; border-left-width: 5px; border-right-width: 5px; border-top-width: 6px; }
+            .connector-horizontal { width: 25px; height: 2px; }
+            .connector-horizontal::after { border-left-color: #555 !important; border-top-width: 5px; border-bottom-width: 5px; border-left-width: 6px;}
+
+
+            .docker-compose-wrapper {
+                margin-bottom: 10px;
+            }
+
+            .docker-containers-area {
+                gap: 5px; /* Menos espacio entre filas de contenedores */
+            }
+            .docker-container-row {
+                flex-direction: column; /* Forzar siempre apilado para impresión para ahorrar espacio horizontal */
+                align-items: center;
+                gap: 5px;
+                page-break-inside: avoid; /* Intentar mantener una fila de docker en una página */
+            }
+            .docker-container-row .connector-horizontal { /* Asegurar que se convierta en vertical */
+                width: 2px !important;
+                min-width: 2px !important;
+                height: 15px !important;
+                margin: 5px auto !important;
+            }
+            .docker-container-row .connector-horizontal::after { /* Flecha vertical */
+                border-left-color: transparent !important;
+                border-right-color: transparent !important;
+                border-top-color: #555 !important;
+                border-left-width: 5px; border-right-width: 5px; border-top-width: 6px;
+                right: 50%;
+                bottom: -1px;
+                left: auto;
+                top: auto;
+                transform: translateX(-50%);
+            }
+
+
+            .component-group {
+                padding: 5px;
+            }
+
+            .internal-connections {
+                margin-top: 10px;
+                padding-top: 8px;
+                border-top: 1px solid #999;
+            }
+            .internal-connections .connection-note {
+                font-size: 7.5pt;
+                color: #333 !important;
+                margin: 3px 0;
+            }
+
+            /* Elementos que no quieres imprimir */
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 768px) {
+            body { padding: 20px 10px; }
+            .architecture-diagram > h1 { font-size: 1.6em; margin-bottom: 25px; }
+            .layer { padding: 15px 10px; }
+            .group-header { font-size: 1.1em; margin-bottom: 20px; }
+            .component { min-width: 180px; padding: 15px; }
+            .component .icon { font-size: 2em; }
+
+            .docker-container-row {
+                flex-direction: column;
+                align-items: center;
+            }
+            .docker-container-row .connector-horizontal { /* Convertir a vertical */
+                width: 3px;
+                min-width: 3px;
+                height: 30px;
+                margin: 10px auto;
+            }
+            .docker-container-row .connector-horizontal::after { /* Cambiar flecha a vertical */
+                border-left: 7px solid transparent;
+                border-right: 7px solid transparent;
+                border-top: 9px solid #adb5bd;
+                right: 50%;
+                bottom: -1px;
+                left: auto;
+                top: auto;
+                transform: translateX(-50%);
+            }
+            @media print and (max-width: 768px) {
+                .docker-container-row .connector-horizontal::after {
+                     border-top-color: #666 !important;
+                }
+            }
+        }
+         @media (max-width: 480px) {
+            .component { min-width: 150px; width: 90%; }
+            .architecture-diagram > h1 { font-size: 1.4em; }
+         }
+
+    </style>
+</head>
+<body>
+    <div class="architecture-diagram">
+        <h1>Diagrama de Arquitectura: Sistema de Gestión de Casos MP</h1>
+
+        <div class="layer user-layer">
+            <div class="component user">
+                <div class="icon">👤</div>
+                <div class="title">Fiscal (Usuario)</div>
+            </div>
+        </div>
+
+        <div class="connector-vertical"></div>
+
+        <div class="layer client-layer">
+            <div class="group-header">Navegador del Cliente</div>
+            <div class="component frontend">
+                <div class="icon">💻</div>
+                <div class="title">Aplicación Frontend</div>
+                <div class="tech-tag">React.js</div>
+                <div class="details">UI, Estado, Routing</div>
+            </div>
+        </div>
+
+        <div class="connector-vertical"></div>
+
+        <div class="layer server-host-layer">
+            <div class="group-header">Servidor / Docker Host</div>
+            
+            <div class="docker-compose-wrapper">
+                <div class="component orchestrator">
+                    <div class="icon">🐳</div>
+                    <div class="title">Docker Compose</div>
+                    <div class="details">Orquestación</div>
+                </div>
+            </div>
+
+            <div class="docker-containers-area">
+                <div class="docker-container-row">
+                    <div class="component-group">
+                        <div class="component-group-title">Contenedor Docker: Backend</div>
+                        <div class="component backend">
+                            <div class="icon">⚙️</div>
+                            <div class="title">API Backend</div>
+                            <div class="tech-tag">Node.js / Express</div>
+                            <div class="details">REST Endpoints, Lógica de Negocio, Auth, DAL</div>
+                        </div>
+                    </div>
+                    
+                    <div class="connector-horizontal"></div>
+
+                    <div class="component-group">
+                        <div class="component-group-title">Contenedor Docker: BD</div>
+                        <div class="component database">
+                            <div class="icon">🗄️</div>
+                            <div class="title">Base de Datos</div>
+                            <div class="tech-tag">SQL Server</div>
+                            <div class="details">Tablas, Stored Procedures</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="docker-container-row">
+                     <div class="component-group">
+                        <div class="component-group-title">Contenedor Docker: Frontend Server</div>
+                        <div class="component webserver">
+                            <div class="icon">🌐</div>
+                            <div class="title">Servidor Web Frontend</div>
+                            <div class="tech-tag">Nginx</div>
+                            <div class="details">Sirve build de React</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="internal-connections">
+                <p class="connection-note">Frontend App ↔ API Backend (HTTP/S)</p>
+                <p class="connection-note">API Backend ↔ Base de Datos (Llamadas a SPs)</p>
+                <p class="connection-note">Docker Compose gestiona: Backend, BD, Frontend Server</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
