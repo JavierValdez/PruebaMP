@@ -7,14 +7,20 @@ services:
     ports:
       - "1433:1433"
     environment:
-      - SA_PASSWORD=StrongP@ssword123
       - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=StrongP@ssword123
       - MSSQL_COLLATION=SQL_Latin1_General_CP1_CI_AS
     volumes:
       - sqlserver_data:/var/opt/mssql
     networks:
       - mp-network
     restart: unless-stopped
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" || exit 1
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
 networks:
   mp-network:
