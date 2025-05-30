@@ -97,7 +97,17 @@ export class CasoService {
   // Endpoint: POST /api/casos
   async crearCaso(caso: CasoForm): Promise<ApiResponse<Caso>> {
     try {
-      const response = await apiClient.post<CasoAPI>('/casos', caso);
+      // Mapear campos para compatibilidad con backend
+      const payload: any = { ...caso };
+      if ('numeroCaso' in payload) {
+        payload.numeroCasoUnico = payload.numeroCaso;
+        delete payload.numeroCaso;
+      }
+      if ('idEstado' in payload) {
+        payload.idEstadoCaso = payload.idEstado;
+        delete payload.idEstado;
+      }
+      const response = await apiClient.post<CasoAPI>('/casos', payload);
       
       if (response.success && response.data) {
         // Transform API response to frontend format

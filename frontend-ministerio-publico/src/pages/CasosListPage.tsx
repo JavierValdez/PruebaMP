@@ -270,9 +270,14 @@ const CasosListPage: React.FC = () => {
       <Box py={3}>
         {/* Encabezado */}
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h4" component="h1">
-            Gestión de Casos
-          </Typography>
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Button variant="outlined" onClick={() => window.history.length > 1 ? window.history.back() : navigate('/dashboard')}>
+              Volver
+            </Button>
+            <Typography variant="h4" component="h1">
+              Gestión de Casos
+            </Typography>
+          </Stack>
           {permisos.CASE_CREATE && (
             <Button
               variant="contained"

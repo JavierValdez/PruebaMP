@@ -56,6 +56,13 @@ const InformesPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generandoInforme, setGenerandoInforme] = useState(false);
+  type ResultadoInformePeriodo = {
+    resumen?: any[];
+    casosPorEstado?: any[];
+    casosPorFiscal?: any[];
+  };
+  const [resultadoInforme, setResultadoInforme] = useState<any[] | ResultadoInformePeriodo | null>(null);
+  const [tipoUltimoInforme, setTipoUltimoInforme] = useState<TipoInforme | null>(null);
 
   const tiposInforme = [
     { value: 'casos-por-estado', label: 'Casos por Estado' },
@@ -73,47 +80,55 @@ const InformesPage: React.FC = () => {
     'SUSPENDIDO'
   ];
 
-  useEffect(() => {
-    loadInformes();
-  }, []);
-
-  const loadInformes = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await informeService.listarInformes();
-      if (response.success && response.data) {
-        setInformes(response.data);
-      }
-    } catch (err) {
-      setError('Error al cargar los informes');
-      console.error('Error loading informes:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // useEffect y loadInformes eliminados porque no existe endpoint para listar informes
 
   const handleGenerarInforme = async () => {
     try {
       setGenerandoInforme(true);
       setError(null);
-      
-      const parametros = {
-        fechaInicio: filtros.fechaInicio?.format('YYYY-MM-DD'),
-        fechaFin: filtros.fechaFin?.format('YYYY-MM-DD'),
-        idFiscal: filtros.idFiscal,
-        estado: filtros.estado,
-      };
+      setResultadoInforme(null);
+      setTipoUltimoInforme(null);
 
-      const response = await informeService.generarInforme({
-        tipoInforme: filtros.tipoInforme,
-        parametros
-      });
-
-      if (response.success) {
-        await loadInformes(); // Recargar la lista de informes
-        setFiltros({ tipoInforme: 'casos-por-estado' }); // Reset form
-        alert('Informe generado exitosamente');
+      let response;
+      if (filtros.tipoInforme === 'casos-por-estado') {
+        response = await informeService.obtenerInformeCasosPorEstado();
+        if (response.success && response.data) {
+          // Soportar respuesta con { casos: [...] }
+          const data = Array.isArray(response.data)
+            ? response.data
+            : (typeof response.data === 'object' && response.data !== null && 'casos' in response.data && Array.isArray((response.data as any).casos)
+                ? (response.data as any).casos
+                : [response.data]);
+          setResultadoInforme(data);
+          setTipoUltimoInforme('casos-por-estado');
+        }
+      } else if (filtros.tipoInforme === 'casos-por-fiscal') {
+        response = await informeService.obtenerInformeCasosPorFiscal({
+          fiscalia: filtros.idFiscal,
+        });
+        if (response.success && response.data) {
+          // Soportar respuesta con { fiscales: [...] }
+          const data = Array.isArray(response.data)
+            ? response.data
+            : (typeof response.data === 'object' && response.data !== null && 'fiscales' in response.data && Array.isArray((response.data as any).fiscales)
+                ? (response.data as any).fiscales
+                : [response.data]);
+          setResultadoInforme(data);
+          setTipoUltimoInforme('casos-por-fiscal');
+        }
+      } else if (filtros.tipoInforme === 'casos-por-periodo' || filtros.tipoInforme === 'resumen-mensual') {
+        response = await informeService.obtenerEstadisticas();
+        if (response.success && response.data) {
+          // Soportar respuesta con resumen, casosPorEstado y casosPorFiscal
+          const resumen = response.data.resumen ? [response.data.resumen] : [];
+          const casosPorEstado = Array.isArray(response.data.casosPorEstado) ? response.data.casosPorEstado : [];
+          const casosPorFiscal = Array.isArray(response.data.casosPorFiscal) ? response.data.casosPorFiscal : [];
+          setResultadoInforme({ resumen, casosPorEstado, casosPorFiscal });
+          setTipoUltimoInforme(filtros.tipoInforme);
+        }
+      } else {
+        setError('Tipo de informe no soportado');
+        return;
       }
     } catch (err) {
       setError('Error al generar el informe');
@@ -169,11 +184,20 @@ const InformesPage: React.FC = () => {
     }
   };
 
+  const handleVolver = () => {
+    window.history.length > 1 ? window.history.back() : window.location.assign('/dashboard');
+  };
+
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Informes y Reportes
-      </Typography>
+      <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+        <Button variant="outlined" onClick={handleVolver}>
+          Volver
+        </Button>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Informes y Reportes
+        </Typography>
+      </Stack>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -260,91 +284,164 @@ const InformesPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Divider sx={{ my: 3 }} />
 
-      {/* Lista de informes generados */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Informes Generados
-          </Typography>
+      {/* Resultado del informe generado dinámicamente */}
 
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <CircularProgress />
-            </Box>
-          ) : (
+
+      {/* Renderizado para informes por estado y fiscal (array plano) */}
+      {resultadoInforme && tipoUltimoInforme === 'casos-por-estado' && Array.isArray(resultadoInforme) && resultadoInforme.length > 0 && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Resultado del Informe
+            </Typography>
             <TableContainer component={Paper} variant="outlined">
-              <Table>
+              <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Tipo</TableCell>
-                    <TableCell>Fecha Generación</TableCell>
-                    <TableCell>Período</TableCell>
                     <TableCell>Estado</TableCell>
-                    <TableCell>Acciones</TableCell>
+                    <TableCell>Total</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {informes.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center">
-                        No hay informes generados
-                      </TableCell>
+                  {resultadoInforme.map((row, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{row.NombreEstado || row.estado}</TableCell>
+                      <TableCell>{row.TotalCasos ?? row.total}</TableCell>
                     </TableRow>
-                  ) : (
-                    informes.map((informe) => (
-                      <TableRow key={informe.idInforme}>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {getIconoTipoInforme(informe.tipoInforme)}
-                            {informe.tipoInforme.replace('-', ' ').toUpperCase()}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          {dayjs(informe.fechaGeneracion).format('DD/MM/YYYY HH:mm')}
-                        </TableCell>
-                        <TableCell>
-                          {informe.fechaInicio && informe.fechaFin 
-                            ? `${dayjs(informe.fechaInicio).format('DD/MM/YYYY')} - ${dayjs(informe.fechaFin).format('DD/MM/YYYY')}`
-                            : 'N/A'
-                          }
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={informe.estado}
-                            color={getEstadoColor(informe.estado)}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={1}>
-                            <Button
-                              size="small"
-                              startIcon={<GetApp />}
-                              onClick={() => handleDescargarInforme(informe.idInforme)}
-                              disabled={informe.estado !== 'GENERADO'}
-                            >
-                              Descargar
-                            </Button>
-                            <Button
-                              size="small"
-                              startIcon={<Print />}
-                              disabled={informe.estado !== 'GENERADO'}
-                            >
-                              Imprimir
-                            </Button>
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {resultadoInforme && tipoUltimoInforme === 'casos-por-fiscal' && Array.isArray(resultadoInforme) && resultadoInforme.length > 0 && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Resultado del Informe
+            </Typography>
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Fiscal</TableCell>
+                    <TableCell>Fiscalía</TableCell>
+                    <TableCell>Asignados</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {resultadoInforme.map((row, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{row.NombreFiscalCompleto || row.fiscal}</TableCell>
+                      <TableCell>{row.NombreFiscalia || row.fiscalia}</TableCell>
+                      <TableCell>{row.TotalCasosAsignados ?? row.casosAsignados}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Renderizado especial para informes por periodo/resumen-mensual */}
+      {resultadoInforme && tipoUltimoInforme && typeof resultadoInforme === 'object' && !Array.isArray(resultadoInforme) && (
+        <>
+          {/* Resumen */}
+          {resultadoInforme.resumen && Array.isArray(resultadoInforme.resumen) && resultadoInforme.resumen.length > 0 && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Resumen del Periodo
+                </Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Total Casos</TableCell>
+                        <TableCell>Fiscales Activos</TableCell>
+                        <TableCell>Promedio Casos por Fiscal</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>{resultadoInforme.resumen[0].totalCasos}</TableCell>
+                        <TableCell>{resultadoInforme.resumen[0].fiscalesActivos}</TableCell>
+                        <TableCell>{resultadoInforme.resumen[0].promedioCasosPorFiscal}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
+          {/* Casos por Estado */}
+          {resultadoInforme.casosPorEstado && Array.isArray(resultadoInforme.casosPorEstado) && resultadoInforme.casosPorEstado.length > 0 && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Casos por Estado
+                </Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Estado</TableCell>
+                        <TableCell>Total</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {resultadoInforme.casosPorEstado.map((row: any, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell>{row.NombreEstado || row.estado}</TableCell>
+                          <TableCell>{row.TotalCasos ?? row.total}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          )}
+          {/* Casos por Fiscal */}
+          {resultadoInforme.casosPorFiscal && Array.isArray(resultadoInforme.casosPorFiscal) && resultadoInforme.casosPorFiscal.length > 0 && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Casos por Fiscal
+                </Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Fiscal</TableCell>
+                        <TableCell>Fiscalía</TableCell>
+                        <TableCell>Asignados</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {resultadoInforme.casosPorFiscal.map((row: any, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell>{row.NombreFiscalCompleto || row.fiscal}</TableCell>
+                          <TableCell>{row.NombreFiscalia || row.fiscalia}</TableCell>
+                          <TableCell>{row.TotalCasosAsignados ?? row.casosAsignados}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* Lista de informes generados eliminada porque no existe endpoint para listar informes */}
     </Box>
   );
 };

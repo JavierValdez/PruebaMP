@@ -162,25 +162,25 @@ export class InformeService {
     return `${baseUrl}/informes/exportar/${tipo}?formato=${formato}&token=${token}`;
   }
 
-  // Listar todos los informes generados
-  async listarInformes(): Promise<ApiResponse<Informe[]>> {
-    try {
-      const response = await apiClient.get<Informe[]>('/informes');
-      return response;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error al obtener la lista de informes');
-    }
-  }
+  // Listar todos los informes generados (NO EXISTE EN BACKEND, deshabilitado)
+  // async listarInformes(): Promise<ApiResponse<Informe[]>> {
+  //   try {
+  //     const response = await apiClient.get<Informe[]>('/informes');
+  //     return response;
+  //   } catch (error: any) {
+  //     throw new Error(error.response?.data?.message || 'Error al obtener la lista de informes');
+  //   }
+  // }
   
-  // Generar un nuevo informe
-  async generarInforme(params: GenerarInformeParams): Promise<ApiResponse<Informe>> {
-    try {
-      const response = await apiClient.post<Informe>('/informes/generar', params);
-      return response;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error al generar informe');
-    }
-  }
+  // Generar un nuevo informe (AJUSTADO: usar rutas GET existentes)
+  // Puedes crear métodos específicos según el tipo de informe que necesitas generar
+  // Por ejemplo:
+  // async generarInformeCasosPorEstado(): Promise<ApiResponse<InformeCasosPorEstado[]>> {
+  //   return this.obtenerInformeCasosPorEstado();
+  // }
+  // async generarInformeCasosPorFiscal(filtros: FiltrosFechas = {}): Promise<ApiResponse<InformeCasosPorFiscal[]>> {
+  //   return this.obtenerInformeCasosPorFiscal(filtros);
+  // }
   
   // Descargar un informe por su ID
   async descargarInforme(idInforme: number): Promise<ApiResponse<Blob>> {

@@ -6,14 +6,14 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginComponent } from './components/auth/LoginComponent';
 import RegisterComponent from './components/auth/RegisterComponent';
 import { ForgotPasswordComponent } from './components/auth/ForgotPasswordComponent';
-import { Dashboard } from './components/dashboard/DashboardSimple';
-import CasosPage from './components/casos/CasosPage';
+import { Dashboard } from './components/dashboard/Dashboard';
 import CasosListPage from './pages/CasosListPage';
 import CasoFormPage from './pages/CasoFormPage';
 import CasoDetailPage from './pages/CasoDetailPage';
 import AuthTestPage from './pages/AuthTestPage';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
+import InformesPage from './components/informes/InformesPage';
 
 // Tema de Material-UI
 const theme = createTheme({
@@ -88,13 +88,7 @@ const AppContent: React.FC = () => {
           </MainLayout>
         </ProtectedRoute>
       } />
-      <Route path="/casos" element={
-        <ProtectedRoute>
-          <MainLayout>
-            <CasosPage />
-          </MainLayout>
-        </ProtectedRoute>
-      } />
+      {/* Ruta /casos eliminada, solo se usa /casos-lista */}
       <Route path="/casos-lista" element={
         <ProtectedRoute>
           <MainLayout>
@@ -120,6 +114,13 @@ const AppContent: React.FC = () => {
         <ProtectedRoute>
           <MainLayout>
             <CasoFormPage />
+          </MainLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/informes" element={
+        <ProtectedRoute>
+          <MainLayout>
+            <InformesPage />
           </MainLayout>
         </ProtectedRoute>
       } />

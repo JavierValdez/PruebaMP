@@ -15,6 +15,7 @@ import {
   ListItemText,
   ListItemIcon,
   Divider,
+  Button,
 } from '@mui/material';
 import {
   Folder,
@@ -25,7 +26,11 @@ import {
   CalendarToday,
   CheckCircle,
   Schedule,
+  Assessment,
+  Add,
+  List as ListIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { informeService, DashboardData } from '../../services/informeService';
 import { useAuth } from '../../contexts/AuthContext';
 import { DashboardDataBackend } from '../../types';
@@ -76,6 +81,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, subtitle
 
 export const Dashboard: React.FC = () => {
   const { state: authState } = useAuth();
+  const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -242,6 +248,40 @@ export const Dashboard: React.FC = () => {
         </Typography>
       </Box>
 
+      {/* Navegación Rápida */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" component="h2" gutterBottom>
+          Acceso Rápido
+        </Typography>
+        <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+          <Button
+            variant="contained"
+            startIcon={<ListIcon />}
+            onClick={() => navigate('/casos-lista')}
+            sx={{ minWidth: 150 }}
+          >
+            Ver Casos
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => navigate('/casos/nuevo')}
+            color="success"
+            sx={{ minWidth: 150 }}
+          >
+            Nuevo Caso
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<Assessment />}
+            onClick={() => navigate('/informes')}
+            sx={{ minWidth: 150 }}
+          >
+            Reportes
+          </Button>
+        </Stack>
+      </Box>
+
       {/* Estadísticas principales */}
       <Stack spacing={3} direction="row" flexWrap="wrap" sx={{ mb: 3 }}>
         <Box sx={{ minWidth: 200, flex: '1 1 auto' }}>
@@ -315,6 +355,8 @@ export const Dashboard: React.FC = () => {
           />
         </Box>
       </Stack>
+
+    
 
       {/* Gráficos y detalles */}
       <Stack spacing={3} direction={{ xs: 'column', md: 'row' }}>

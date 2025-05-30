@@ -251,10 +251,10 @@ const CasoFormPage: React.FC<CasoFormPageProps> = () => {
           </Typography>
           <Button
             startIcon={<BackIcon />}
-            onClick={handleCancel}
+            onClick={() => window.history.length > 1 ? window.history.back() : navigate('/dashboard')}
             variant="outlined"
           >
-            Volver a Lista
+            Volver
           </Button>
         </Stack>
 
