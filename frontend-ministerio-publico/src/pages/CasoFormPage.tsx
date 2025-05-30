@@ -172,7 +172,8 @@ const CasoFormPage: React.FC<CasoFormPageProps> = () => {
     navigate('/casos-lista');
   };
 
-  const obtenerNombreEstado = (idEstado: number): string => {
+  const obtenerNombreEstado = (idEstado?: number): string => {
+    if (typeof idEstado !== 'number') return 'Sin estado';
     const estado = estados.find(e => e.idEstado === idEstado);
     return estado?.nombreEstado || 'Estado desconocido';
   };

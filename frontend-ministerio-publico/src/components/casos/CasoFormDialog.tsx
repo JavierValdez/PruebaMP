@@ -41,7 +41,7 @@ const CasoFormDialog: React.FC<CasoFormDialogProps> = ({
   const [numeroCaso, setNumeroCaso] = useState('');
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [idEstado, setIdEstado] = useState<number>(0);
+  const [idEstado, setIdEstado] = useState<number | undefined>(0);
   const [idFiscalAsignado, setIdFiscalAsignado] = useState<number | undefined>(undefined);
 
   // Form validation
@@ -107,7 +107,7 @@ const CasoFormDialog: React.FC<CasoFormDialogProps> = ({
         setNumeroCaso(caso.numeroCaso);
         setTitulo(caso.titulo);
         setDescripcion(caso.descripcion || '');
-        setIdEstado(caso.idEstado);
+        setIdEstado(caso.idEstado ?? 0);
         setIdFiscalAsignado(caso.idFiscalAsignado);
       } else {
         setNumeroCaso('');
@@ -137,7 +137,7 @@ const CasoFormDialog: React.FC<CasoFormDialogProps> = ({
         numeroCaso,
         titulo,
         descripcion,
-        idEstado,
+        idEstado: idEstado ?? 0,
         idFiscalAsignado
       };
 

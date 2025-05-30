@@ -45,12 +45,15 @@ export interface Caso {
   descripcion?: string;
   fechaCreacion: string;
   fechaAsignacion?: string;
-  idEstado: number;
+  idEstado?: number; // Puede ser undefined si no viene de backend
+  nombreEstado?: string; // Nuevo: nombre del estado directo del backend
   idFiscalAsignado?: number;
   idUsuarioCreador: number;
   estado?: EstadoCasoType;
   fiscalAsignado?: Usuario;
   fiscal?: Fiscal; // Alternative property name
+  fiscalPrimerNombre?: string; // Para mostrar directo si no hay id
+  fiscalPrimerApellido?: string;
   usuarioCreador?: Usuario;
 }
 

@@ -223,12 +223,14 @@ const CasosListPage: React.FC = () => {
     setPaginaActual(1);
   };
 
-  const obtenerNombreEstado = (idEstado: number) => {
+  const obtenerNombreEstado = (idEstado?: number) => {
+    if (typeof idEstado !== 'number') return 'Sin estado';
     const estado = estados.find(e => e.idEstado === idEstado);
     return estado?.nombreEstado || 'Sin estado';
   };
 
-  const obtenerColorEstado = (idEstado: number) => {
+  const obtenerColorEstado = (idEstado?: number) => {
+    if (typeof idEstado !== 'number') return 'default';
     // Colores basados en estados típicos
     const colores: { [key: string]: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' } = {
       'Abierto': 'info',
@@ -238,15 +240,19 @@ const CasosListPage: React.FC = () => {
       'Archivado': 'default',
       'Pendiente': 'secondary'
     };
-    
     const nombreEstado = obtenerNombreEstado(idEstado);
     return colores[nombreEstado] || 'default';
   };
 
-  const obtenerNombreFiscal = (idFiscal?: number) => {
-    if (!idFiscal) return 'Sin asignar';
-    const fiscal = fiscales.find(f => f.idFiscal === idFiscal);
-    return fiscal ? `${fiscal.primerNombre} ${fiscal.primerApellido}` : 'Sin asignar';
+  const obtenerNombreFiscal = (caso: Caso) => {
+    if (caso.idFiscalAsignado) {
+      const fiscal = fiscales.find(f => f.idFiscal === caso.idFiscalAsignado);
+      if (fiscal) return `${fiscal.primerNombre} ${fiscal.primerApellido}`;
+    }
+    if (caso.fiscalPrimerNombre || caso.fiscalPrimerApellido) {
+      return `${caso.fiscalPrimerNombre || ''} ${caso.fiscalPrimerApellido || ''}`.trim();
+    }
+    return 'Sin asignar';
   };
 
   if (isLoading && casos.length === 0) {
@@ -392,14 +398,14 @@ const CasosListPage: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={obtenerNombreEstado(caso.idEstado)}
+                          label={caso.nombreEstado || obtenerNombreEstado(caso.idEstado)}
                           color={obtenerColorEstado(caso.idEstado)}
                           size="small"
                         />
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
-                          {obtenerNombreFiscal(caso.idFiscalAsignado)}
+                          {obtenerNombreFiscal(caso)}
                         </Typography>
                       </TableCell>
                       <TableCell>

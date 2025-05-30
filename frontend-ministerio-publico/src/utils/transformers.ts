@@ -21,7 +21,8 @@ export const transformarCasoAPI = (casoAPI: CasoAPI): Caso => {
     descripcion: casoAPI.Descripcion || '',
     fechaCreacion: casoAPI.FechaCreacion,
     fechaAsignacion: casoAPI.FechaAsignacion,
-    idEstado: casoAPI.IdEstadoCaso || 1, // Default estado si no viene
+    idEstado: casoAPI.IdEstadoCaso, // No asignar por defecto
+    nombreEstado: casoAPI.NombreEstadoCaso, // Nuevo: nombre del estado directo del backend
     idFiscalAsignado: casoAPI.IdFiscalAsignado || undefined,
     idUsuarioCreador: casoAPI.IdUsuarioCreador || 0,
     // Campos adicionales opcionales
@@ -35,6 +36,8 @@ export const transformarCasoAPI = (casoAPI: CasoAPI): Caso => {
       apellidos: casoAPI.FiscalPrimerApellido,
       activo: true,
     } : undefined,
+    fiscalPrimerNombre: casoAPI.FiscalPrimerNombre || undefined,
+    fiscalPrimerApellido: casoAPI.FiscalPrimerApellido || undefined,
   };
 };
 

@@ -102,12 +102,14 @@ const CasoDetailPage: React.FC = () => {
     navigate(`/casos/editar/${id}`);
   };
 
-  const obtenerNombreEstado = (idEstado: number): string => {
+  const obtenerNombreEstado = (idEstado?: number): string => {
+    if (typeof idEstado !== 'number') return 'Sin estado';
     const estado = estados.find(e => e.idEstado === idEstado);
     return estado?.nombreEstado || 'Estado desconocido';
   };
 
-  const obtenerColorEstado = (idEstado: number) => {
+  const obtenerColorEstado = (idEstado?: number) => {
+    if (typeof idEstado !== 'number') return 'default';
     const colores: { [key: string]: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' } = {
       'Abierto': 'info',
       'En Investigación': 'primary',
@@ -116,7 +118,6 @@ const CasoDetailPage: React.FC = () => {
       'Archivado': 'default',
       'Pendiente': 'secondary'
     };
-    
     const nombreEstado = obtenerNombreEstado(idEstado);
     return colores[nombreEstado] || 'default';
   };
