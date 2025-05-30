@@ -73,7 +73,7 @@ const CasosListPage: React.FC = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const [resultadosPorPagina, setResultadosPorPagina] = useState(10);
   const [totalResultados, setTotalResultados] = useState(0);
-  const [totalPaginas, setTotalPaginas] = useState(0);
+  // const [totalPaginas, setTotalPaginas] = useState(0); // Eliminado porque no se usa
 
   // Estados para modal de reasignación
   const [reasignacionDialog, setReasignacionDialog] = useState(false);
@@ -129,7 +129,7 @@ const CasosListPage: React.FC = () => {
         const data = response.data as PaginatedResponse<Caso>;
         setCasos(data.data || []);
         setTotalResultados(data.total || 0);
-        setTotalPaginas(data.totalPages || 0);
+        // setTotalPaginas(data.totalPages || 0); // Eliminado porque no se usa
       } else {
         setError(response.message || 'Error al cargar casos');
       }

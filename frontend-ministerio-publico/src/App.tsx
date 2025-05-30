@@ -14,6 +14,7 @@ import AuthTestPage from './pages/AuthTestPage';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
 import InformesPage from './components/informes/InformesPage';
+import PerfilPage from './pages/PerfilPage';
 
 // Tema de Material-UI
 const theme = createTheme({
@@ -121,6 +122,13 @@ const AppContent: React.FC = () => {
         <ProtectedRoute>
           <MainLayout>
             <InformesPage />
+          </MainLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/perfil" element={
+        <ProtectedRoute>
+          <MainLayout>
+            <PerfilPage />
           </MainLayout>
         </ProtectedRoute>
       } />
