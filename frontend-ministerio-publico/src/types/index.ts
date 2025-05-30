@@ -114,6 +114,7 @@ export interface CasoForm {
   titulo?: string;
   descripcion: string;
   idEstado: number;
+  idEstadoCaso?: number; // Para compatibilidad con backend
   idFiscalAsignado?: number | null;
   detalleProgreso?: string;
 }

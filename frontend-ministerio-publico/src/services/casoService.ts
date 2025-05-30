@@ -123,8 +123,14 @@ export class CasoService {
   // Endpoint: PUT /api/casos/:id
   async actualizarCaso(id: number, caso: Partial<CasoForm>): Promise<ApiResponse<Caso>> {
     try {
-      const response = await apiClient.put<CasoAPI>(`/casos/${id}`, caso);
-      
+      // Mapear idEstado a idEstadoCaso si existe
+      let payload = { ...caso };
+      if ('idEstado' in payload) {
+        payload = { ...payload, idEstadoCaso: payload.idEstado };
+        delete payload.idEstado;
+      }
+      const response = await apiClient.put<CasoAPI>(`/casos/${id}`, payload);
+
       if (response.success && response.data) {
         // Transform API response to frontend format
         const transformedData = transformarCasoAPI(response.data);
@@ -134,7 +140,7 @@ export class CasoService {
           message: response.message
         };
       }
-      
+
       return {
         success: false,
         data: undefined,
@@ -268,8 +274,7 @@ export class CasoService {
   async reasignarFiscal(idCaso: number, idFiscalNuevo: number): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.post<any>(`/casos/${idCaso}/reasignar-fiscal`, { 
-        idCaso,
-        idFiscalNuevo 
+        idNuevoFiscal: idFiscalNuevo
       });
       return response;
     } catch (error: any) {
