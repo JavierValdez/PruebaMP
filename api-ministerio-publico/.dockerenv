@@ -1,0 +1,9 @@
+# Este archivo .dockerenv se usará cuando la API se ejecute en Docker
+PORT=3001
+DB_USER=sa
+DB_PASSWORD=StrongP@ssword123
+DB_SERVER=sqlserver
+DB_DATABASE=master
+DB_PORT=1433
+JWT_SECRET=tu_secreto_super_secreto_para_jwt_ministerio_publico_2024
+NODE_ENV=development

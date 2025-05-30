@@ -22,6 +22,50 @@ services:
       retries: 5
       start_period: 60s
 
+  api:
+    build:
+      context: ./api-ministerio-publico
+      dockerfile: Dockerfile
+    container_name: mp-api
+    ports:
+      - "3001:3001"
+    environment:
+      # Variables de entorno para la conexión a la base de datos
+      DB_USER: sa
+      DB_PASSWORD: StrongP@ssword123
+      DB_SERVER: sqlserver
+      DB_DATABASE: master
+      DB_PORT: 1433
+      # Variables de entorno para la autenticación y configuración
+      JWT_SECRET: "tu_secreto_super_secreto_para_jwt_ministerio_publico_2024"
+      NODE_ENV: development
+    # Eliminar los volúmenes para entorno de producción/despliegue
+    # volumes:
+    #   - ./api-ministerio-publico:/usr/src/app
+    #   - /usr/src/app/node_modules
+    networks:
+      - mp-network
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend-ministerio-publico
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_BASE_URL=http://localhost:3001/api
+        - REACT_APP_API_HOST=http://localhost:3001
+    container_name: mp-frontend
+    ports:
+      - "3000:80" # Mapea el puerto 3000 del host al puerto 80 del contenedor Nginx
+    networks:
+      - mp-network
+    depends_on:
+      - api
+    restart: unless-stopped
+
 networks:
   mp-network:
     driver: bridge
