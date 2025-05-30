@@ -1,0 +1,25 @@
+services:
+  sqlserver:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+    container_name: mp-sqlserver
+    ports:
+      - "1433:1433"
+    environment:
+      - SA_PASSWORD=StrongP@ssword123
+      - ACCEPT_EULA=Y
+      - MSSQL_COLLATION=SQL_Latin1_General_CP1_CI_AS
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - mp-network
+    restart: unless-stopped
+
+networks:
+  mp-network:
+    driver: bridge
+
+volumes:
+  sqlserver_data:
+    driver: local
