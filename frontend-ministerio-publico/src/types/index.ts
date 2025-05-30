@@ -145,6 +145,48 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+// Interfaces específicas para respuestas de la API (con nombres en PascalCase)
+export interface CasoAPI {
+  IdCaso: number;
+  NumeroCasoUnico: string;
+  Descripcion?: string;
+  Titulo?: string;
+  FechaCreacion: string;
+  FechaAsignacion?: string;
+  IdEstadoCaso?: number;
+  IdFiscalAsignado?: number;
+  IdUsuarioCreador?: number;
+  NombreEstadoCaso?: string;
+  FiscalPrimerNombre?: string;
+  FiscalPrimerApellido?: string;
+}
+
+export interface PaginatedResponseAPI<T> {
+  casos: T[];
+  paginacion: {
+    paginaActual: number;
+    resultadosPorPagina: number;
+    totalResultados: number;
+    totalPaginas: number;
+  };
+}
+
+export interface EstadoCasoAPI {
+  IdEstadoCaso: number;
+  NombreEstado: string;
+  DescripcionEstado?: string;
+}
+
+export interface FiscalAPI {
+  IdFiscal: number;
+  PrimerNombre: string;
+  SegundoNombre?: string;
+  PrimerApellido: string;
+  SegundoApellido?: string;
+  Email?: string;
+  Activo: boolean;
+}
+
 // Interfaces para estadísticas y reportes
 export interface EstadisticasCasos {
   totalCasos: number;

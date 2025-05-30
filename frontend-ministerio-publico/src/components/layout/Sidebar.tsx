@@ -37,6 +37,12 @@ const menuItems = [
   {
     text: 'Casos',
     icon: <Folder />,
+    path: '/casos-lista',
+    roles: ['ADMIN', 'FISCAL', 'SECRETARIO']
+  },
+  {
+    text: 'Casos (Antiguo)',
+    icon: <Folder />,
     path: '/casos',
     roles: ['ADMIN', 'FISCAL', 'SECRETARIO']
   },

@@ -7,8 +7,18 @@ import {
   FiltrosCasos,
   PaginatedResponse,
   EstadisticasCasos,
-  ApiResponse 
+  ApiResponse,
+  CasoAPI,
+  EstadoCasoAPI,
+  FiscalAPI,
+  PaginatedResponseAPI
 } from '../types';
+import { 
+  transformarCasoAPI, 
+  transformarEstadoCasoAPI, 
+  transformarFiscalAPI, 
+  transformarPaginatedResponseAPI 
+} from '../utils/transformers';
 
 export class CasoService {
   // Alias for compatibility
@@ -35,8 +45,23 @@ export class CasoService {
         Object.entries(params).filter(([_, value]) => value !== undefined)
       );
 
-      const response = await apiClient.get<PaginatedResponse<Caso>>('/casos', filteredParams);
-      return response;
+      const response = await apiClient.get<PaginatedResponseAPI<CasoAPI>>('/casos', filteredParams);
+      
+      if (response.success && response.data) {
+        // Transform API response to frontend format
+        const transformedData = transformarPaginatedResponseAPI(response.data, transformarCasoAPI);
+        return {
+          success: true,
+          data: transformedData,
+          message: response.message
+        };
+      }
+      
+      return {
+        success: false,
+        data: undefined,
+        message: response.message || 'Error al obtener casos'
+      };
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al obtener casos');
     }
@@ -147,8 +172,23 @@ export class CasoService {
   // Endpoint: GET /api/casos/estados
   async obtenerEstados(): Promise<ApiResponse<EstadoCaso[]>> {
     try {
-      const response = await apiClient.get<EstadoCaso[]>('/casos/estados');
-      return response;
+      const response = await apiClient.get<EstadoCasoAPI[]>('/casos/estados');
+      
+      if (response.success && response.data) {
+        // Transform API response to frontend format
+        const transformedData = response.data.map(transformarEstadoCasoAPI);
+        return {
+          success: true,
+          data: transformedData,
+          message: response.message
+        };
+      }
+      
+      return {
+        success: false,
+        data: undefined,
+        message: response.message || 'Error al obtener estados'
+      };
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al obtener estados');
     }
@@ -158,8 +198,23 @@ export class CasoService {
   // Endpoint: GET /api/casos/fiscales (corregido desde /fiscales)
   async obtenerFiscales(): Promise<ApiResponse<Fiscal[]>> {
     try {
-      const response = await apiClient.get<Fiscal[]>('/casos/fiscales');
-      return response;
+      const response = await apiClient.get<FiscalAPI[]>('/casos/fiscales');
+      
+      if (response.success && response.data) {
+        // Transform API response to frontend format
+        const transformedData = response.data.map(transformarFiscalAPI);
+        return {
+          success: true,
+          data: transformedData,
+          message: response.message
+        };
+      }
+      
+      return {
+        success: false,
+        data: undefined,
+        message: response.message || 'Error al obtener fiscales'
+      };
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al obtener fiscales');
     }
