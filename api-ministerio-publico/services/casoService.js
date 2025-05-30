@@ -248,6 +248,7 @@ class CasoService {
      * Reasignar fiscal de caso con validación
      */
     async reasignarFiscal(idCaso, idNuevoFiscal, idUsuarioSolicitante) {
+        const { logFailedReassignment } = require('../utils/logUtils');
         try {
             const result = await spExecutor.executeWithOutput(
                 'sp_Caso_ReasignarFiscalValidado',
@@ -268,6 +269,13 @@ class CasoService {
                     message: result.output.Mensaje || 'Fiscal reasignado exitosamente'
                 };
             } else {
+                // Log intento fallido
+                logFailedReassignment({
+                  idCaso,
+                  idNuevoFiscal,
+                  idUsuarioSolicitante,
+                  motivo: result.output.Mensaje || 'No se pudo reasignar el fiscal'
+                });
                 throw {
                     success: false,
                     message: result.output.Mensaje || 'No se pudo reasignar el fiscal',
@@ -277,6 +285,15 @@ class CasoService {
             }
 
         } catch (error) {
+            // Log también si el error es de validación de negocio
+            if (error && error.code === config.ERROR_CODES.BUSINESS_RULE_VIOLATION) {
+                logFailedReassignment({
+                  idCaso,
+                  idNuevoFiscal,
+                  idUsuarioSolicitante,
+                  motivo: error.message || 'No se pudo reasignar el fiscal'
+                });
+            }
             console.error('Error en reasignarFiscal:', error);
             throw error;
         }
