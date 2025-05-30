@@ -43,27 +43,30 @@ class ApiClient {
             const refreshToken = localStorage.getItem('refreshToken');
             if (refreshToken) {
               const response = await axios.post(
-                `${process.env.REACT_APP_API_BASE_URL}/auth/refresh`,
-                {},
+                `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api'}/auth/refresh`,
+                { refreshToken },
                 {
                   headers: {
-                    Authorization: `Bearer ${refreshToken}`,
+                    'Content-Type': 'application/json',
                   },
                 }
               );
 
-              const responseData = response.data as { data: { token: string } };
-              const { token } = responseData.data;
-              localStorage.setItem('token', token);
+              const responseData = response.data as ApiResponse<{ token: string }>;
+              if (responseData.success && responseData.data) {
+                const { token } = responseData.data;
+                localStorage.setItem('token', token);
 
-              // Reintentar la request original
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              return this.api(originalRequest);
+                // Reintentar la request original
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                return this.api(originalRequest);
+              }
             }
           } catch (refreshError) {
             // Si falla el refresh, limpiar tokens y redirigir al login
             localStorage.removeItem('token');
             localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
             window.location.href = '/login';
             return Promise.reject(refreshError);
           }
@@ -103,3 +106,4 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient();
+export default apiClient;

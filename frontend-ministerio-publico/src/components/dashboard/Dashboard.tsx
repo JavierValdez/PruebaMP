@@ -28,6 +28,7 @@ import {
 } from '@mui/icons-material';
 import { informeService, DashboardData } from '../../services/informeService';
 import { useAuth } from '../../contexts/AuthContext';
+import { DashboardDataBackend } from '../../types';
 
 interface StatCardProps {
   title: string;
@@ -90,7 +91,72 @@ export const Dashboard: React.FC = () => {
       const response = await informeService.obtenerDashboard();
       
       if (response.success && response.data) {
-        setDashboardData(response.data);
+        // Adaptar la estructura de datos del backend a la estructura esperada por el frontend
+        const backendData = response.data as DashboardDataBackend;
+        const adaptedData: DashboardData = {
+          totalCasos: backendData.estadisticasGenerales?.resumen?.totalCasos || 0,
+          casosAbiertos: 0, // Calcular desde casosPorEstado
+          casosCerrados: 0, // Calcular desde casosPorEstado
+          casosAsignados: 0, // Calcular desde casosPorFiscal
+          casosSinAsignar: 0, // Calcular
+          fiscalesActivos: backendData.estadisticasGenerales?.resumen?.fiscalesActivos || 0,
+          fiscaliasActivas: 0, // Por defecto
+          casosHoy: 0, // Por defecto hasta implementar
+          casosSemana: 0, // Por defecto hasta implementar
+          casosMes: 0, // Por defecto hasta implementar
+          casosPorEstado: {},
+          casosPorFiscalia: {},
+          tendenciaSemanal: []
+        };
+
+        // Procesar casos por estado
+        if (backendData.estadisticasGenerales?.casosPorEstado) {
+          const estadosMap: { [estado: string]: number } = {};
+          let abiertos = 0;
+          let cerrados = 0;
+
+          backendData.estadisticasGenerales.casosPorEstado.forEach((item: any) => {
+            const estado = item.EstadoCaso || item.estado || 'Sin Estado';
+            const total = item.TotalCasos || item.total || 0;
+            estadosMap[estado] = total;
+
+            // Categorizar como abierto/cerrado
+            if (estado.toLowerCase().includes('cerrado') || estado.toLowerCase().includes('resuelto')) {
+              cerrados += total;
+            } else {
+              abiertos += total;
+            }
+          });
+
+          adaptedData.casosPorEstado = estadosMap;
+          adaptedData.casosAbiertos = abiertos;
+          adaptedData.casosCerrados = cerrados;
+        }
+
+        // Procesar casos por fiscal/fiscalía
+        if (backendData.estadisticasGenerales?.casosPorFiscal) {
+          const fiscaliasMap: { [fiscalia: string]: number } = {};
+          let asignados = 0;
+
+          backendData.estadisticasGenerales.casosPorFiscal.forEach((item: any) => {
+            const fiscalia = item.Fiscalia || item.fiscalia || 'Sin Fiscalía';
+            const casos = item.CasosAsignados || item.casosAsignados || 0;
+            
+            if (fiscaliasMap[fiscalia]) {
+              fiscaliasMap[fiscalia] += casos;
+            } else {
+              fiscaliasMap[fiscalia] = casos;
+            }
+            
+            asignados += casos;
+          });
+
+          adaptedData.casosPorFiscalia = fiscaliasMap;
+          adaptedData.casosAsignados = asignados;
+          adaptedData.casosSinAsignar = adaptedData.totalCasos - asignados;
+        }
+
+        setDashboardData(adaptedData);
       } else {
         setError(response.message || 'Error al cargar dashboard');
       }
@@ -101,7 +167,11 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const getColorByEstado = (estado: string): 'primary' | 'success' | 'warning' | 'error' => {
+  const getColorByEstado = (estado: string | undefined | null): 'primary' | 'success' | 'warning' | 'error' => {
+    if (!estado || typeof estado !== 'string') {
+      return 'primary';
+    }
+    
     switch (estado.toLowerCase()) {
       case 'cerrado':
       case 'resuelto':
@@ -254,24 +324,36 @@ export const Dashboard: React.FC = () => {
             <CardHeader title="Casos por Estado" />
             <CardContent>
               <List dense>
-                {Object.entries(dashboardData.casosPorEstado).map(([estado, cantidad]) => (
-                  <React.Fragment key={estado}>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Chip
-                          size="small"
-                          label={cantidad}
-                          color={getColorByEstado(estado)}
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={estado}
-                        secondary={`${((cantidad / dashboardData.totalCasos) * 100).toFixed(1)}%`}
-                      />
-                    </ListItem>
-                    <Divider component="li" />
-                  </React.Fragment>
-                ))}
+                {dashboardData.casosPorEstado && Object.keys(dashboardData.casosPorEstado).length > 0 ? (
+                  Object.entries(dashboardData.casosPorEstado).map(([estado, cantidad]) => {
+                    const estadoSeguro = estado || 'Sin Estado';
+                    const cantidadSegura = Number(cantidad) || 0;
+                    const totalSeguro = dashboardData.totalCasos || 1;
+                    
+                    return (
+                      <React.Fragment key={estado}>
+                        <ListItem>
+                          <ListItemIcon>
+                            <Chip
+                              size="small"
+                              label={cantidadSegura}
+                              color={getColorByEstado(estadoSeguro)}
+                            />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={estadoSeguro}
+                            secondary={`${((cantidadSegura / totalSeguro) * 100).toFixed(1)}%`}
+                          />
+                        </ListItem>
+                        <Divider component="li" />
+                      </React.Fragment>
+                    );
+                  })
+                ) : (
+                  <ListItem>
+                    <ListItemText primary="No hay datos disponibles" secondary="Sin información de casos por estado" />
+                  </ListItem>
+                )}
               </List>
             </CardContent>
           </Card>
@@ -283,25 +365,37 @@ export const Dashboard: React.FC = () => {
             <CardHeader title="Casos por Fiscalía" />
             <CardContent>
               <List dense>
-                {Object.entries(dashboardData.casosPorFiscalia).map(([fiscalia, cantidad]) => (
-                  <React.Fragment key={fiscalia}>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Chip
-                          size="small"
-                          label={cantidad}
-                          color="primary"
-                          variant="outlined"
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={fiscalia}
-                        secondary={`${((cantidad / dashboardData.totalCasos) * 100).toFixed(1)}%`}
-                      />
-                    </ListItem>
-                    <Divider component="li" />
-                  </React.Fragment>
-                ))}
+                {dashboardData.casosPorFiscalia && Object.keys(dashboardData.casosPorFiscalia).length > 0 ? (
+                  Object.entries(dashboardData.casosPorFiscalia).map(([fiscalia, cantidad]) => {
+                    const fiscaliaSegura = fiscalia || 'Sin Fiscalía';
+                    const cantidadSegura = Number(cantidad) || 0;
+                    const totalSeguro = dashboardData.totalCasos || 1;
+                    
+                    return (
+                      <React.Fragment key={fiscalia}>
+                        <ListItem>
+                          <ListItemIcon>
+                            <Chip
+                              size="small"
+                              label={cantidadSegura}
+                              color="primary"
+                              variant="outlined"
+                            />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={fiscaliaSegura}
+                            secondary={`${((cantidadSegura / totalSeguro) * 100).toFixed(1)}%`}
+                          />
+                        </ListItem>
+                        <Divider component="li" />
+                      </React.Fragment>
+                    );
+                  })
+                ) : (
+                  <ListItem>
+                    <ListItemText primary="No hay datos disponibles" secondary="Sin información de casos por fiscalía" />
+                  </ListItem>
+                )}
               </List>
             </CardContent>
           </Card>

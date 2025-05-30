@@ -1,5 +1,5 @@
-import { apiClient } from './apiClient';
-import { ApiResponse } from '../types';
+import { ApiResponse, Informe, DashboardDataBackend } from '../types';
+import apiClient from './apiClient';
 
 // Interfaces para los informes
 export interface DashboardData {
@@ -57,11 +57,21 @@ export interface FiltrosFechas {
   fiscalia?: number;
 }
 
+export interface GenerarInformeParams {
+  tipoInforme: string;
+  parametros?: {
+    fechaInicio?: string;
+    fechaFin?: string;
+    idFiscal?: number;
+    estado?: string;
+  }
+}
+
 export class InformeService {
   // Obtener dashboard principal
-  async obtenerDashboard(): Promise<ApiResponse<DashboardData>> {
+  async obtenerDashboard(): Promise<ApiResponse<DashboardDataBackend>> {
     try {
-      const response = await apiClient.get<DashboardData>('/informes/dashboard');
+      const response = await apiClient.get<DashboardDataBackend>('/informes/dashboard');
       return response;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al obtener dashboard');
@@ -150,6 +160,38 @@ export class InformeService {
     const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api';
     const token = localStorage.getItem('token');
     return `${baseUrl}/informes/exportar/${tipo}?formato=${formato}&token=${token}`;
+  }
+
+  // Listar todos los informes generados
+  async listarInformes(): Promise<ApiResponse<Informe[]>> {
+    try {
+      const response = await apiClient.get<Informe[]>('/informes');
+      return response;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Error al obtener la lista de informes');
+    }
+  }
+  
+  // Generar un nuevo informe
+  async generarInforme(params: GenerarInformeParams): Promise<ApiResponse<Informe>> {
+    try {
+      const response = await apiClient.post<Informe>('/informes/generar', params);
+      return response;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Error al generar informe');
+    }
+  }
+  
+  // Descargar un informe por su ID
+  async descargarInforme(idInforme: number): Promise<ApiResponse<Blob>> {
+    try {
+      const response = await apiClient.get<Blob>(`/informes/${idInforme}/descargar`, {
+        responseType: 'blob'
+      });
+      return response;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Error al descargar informe');
+    }
   }
 }
 

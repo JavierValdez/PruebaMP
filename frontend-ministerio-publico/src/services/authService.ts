@@ -6,7 +6,9 @@ import {
   Usuario, 
   ChangePasswordForm,
   ApiResponse,
-  Fiscalia
+  Fiscalia,
+  ForgotPasswordForm,
+  ResetPasswordForm
 } from '../types';
 
 export class AuthService {
@@ -23,7 +25,9 @@ export class AuthService {
       
       return response;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error al iniciar sesión');
+      // Mejorar el manejo de errores específicos
+      const errorMessage = error.response?.data?.message || error.message || 'Error al iniciar sesión';
+      throw new Error(errorMessage);
     }
   }
 
@@ -38,7 +42,8 @@ export class AuthService {
 
   async logout(): Promise<void> {
     try {
-      await apiClient.post('/auth/logout');
+      const refreshToken = localStorage.getItem('refreshToken');
+      await apiClient.post('/auth/logout', { refreshToken });
     } catch (error) {
       // Continuar con el logout incluso si la API falla
       console.error('Error al cerrar sesión en el servidor:', error);
@@ -70,7 +75,10 @@ export class AuthService {
 
   async refreshToken(): Promise<ApiResponse<{ token: string }>> {
     try {
-      const response = await apiClient.post<{ token: string }>('/auth/refresh');
+      const refreshToken = localStorage.getItem('refreshToken');
+      const response = await apiClient.post<{ token: string }>('/auth/refresh', {
+        refreshToken
+      });
       
       if (response.success && response.data) {
         localStorage.setItem('token', response.data.token);
@@ -85,12 +93,36 @@ export class AuthService {
   async changePassword(passwordData: ChangePasswordForm): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.post<any>('/auth/change-password', {
-        passwordActual: passwordData.passwordActual,
-        passwordNuevo: passwordData.passwordNuevo
+        currentPassword: passwordData.passwordActual,
+        newPassword: passwordData.passwordNuevo
       });
       return response;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error al cambiar contraseña');
+      const errorMessage = error.response?.data?.message || error.message || 'Error al cambiar contraseña';
+      throw new Error(errorMessage);
+    }
+  }
+
+  async forgotPassword(email: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.post<any>('/auth/forgot-password', { email });
+      return response;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Error al solicitar recuperación de contraseña';
+      throw new Error(errorMessage);
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.post<any>('/auth/reset-password', {
+        token,
+        password: newPassword
+      });
+      return response;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Error al restablecer contraseña';
+      throw new Error(errorMessage);
     }
   }
 

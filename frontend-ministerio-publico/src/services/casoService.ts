@@ -17,14 +17,15 @@ export class CasoService {
   }
 
   // Listar casos con paginación y filtros
+  // Endpoint: GET /api/casos
   async listarCasos(filtros: FiltrosCasos = {}): Promise<ApiResponse<PaginatedResponse<Caso>>> {
     try {
       const params = {
-        page: filtros.page || 1,
-        limit: filtros.limit || 10,
+        pagina: filtros.page || 1, // API usa 'pagina' no 'page'
+        resultadosPorPagina: filtros.limit || 10, // API usa 'resultadosPorPagina' no 'limit'
         busqueda: filtros.busqueda,
-        idEstado: filtros.idEstado,
-        idFiscal: filtros.idFiscal,
+        idEstadoCaso: filtros.idEstado, // API usa 'idEstadoCaso'
+        idFiscalAsignado: filtros.idFiscal, // API usa 'idFiscalAsignado'
         fechaDesde: filtros.fechaDesde,
         fechaHasta: filtros.fechaHasta
       };
@@ -42,6 +43,7 @@ export class CasoService {
   }
 
   // Obtener un caso por ID
+  // Endpoint: GET /api/casos/:id
   async obtenerCaso(id: number): Promise<ApiResponse<Caso>> {
     try {
       const response = await apiClient.get<Caso>(`/casos/${id}`);
@@ -52,6 +54,7 @@ export class CasoService {
   }
 
   // Crear nuevo caso
+  // Endpoint: POST /api/casos
   async crearCaso(caso: CasoForm): Promise<ApiResponse<Caso>> {
     try {
       const response = await apiClient.post<Caso>('/casos', caso);
@@ -61,7 +64,8 @@ export class CasoService {
     }
   }
 
-  // Actualizar caso
+  // Actualizar caso (actualizaciones parciales permitidas)
+  // Endpoint: PUT /api/casos/:id
   async actualizarCaso(id: number, caso: Partial<CasoForm>): Promise<ApiResponse<Caso>> {
     try {
       const response = await apiClient.put<Caso>(`/casos/${id}`, caso);
@@ -71,7 +75,8 @@ export class CasoService {
     }
   }
 
-  // Buscar casos
+  // Buscar casos por término
+  // Endpoint: GET /api/casos/buscar?termino=XXX
   async buscarCasos(termino: string): Promise<ApiResponse<Caso[]>> {
     try {
       const response = await apiClient.get<Caso[]>('/casos/buscar', { termino });
@@ -82,6 +87,7 @@ export class CasoService {
   }
 
   // Obtener mis casos asignados
+  // Endpoint: GET /api/casos/mis-casos
   async obtenerMisCasos(): Promise<ApiResponse<Caso[]>> {
     try {
       const response = await apiClient.get<Caso[]>('/casos/mis-casos');
@@ -92,6 +98,7 @@ export class CasoService {
   }
 
   // Obtener casos por fiscal
+  // Endpoint: GET /api/casos/fiscal/:idFiscal
   async obtenerCasosPorFiscal(idFiscal: number): Promise<ApiResponse<Caso[]>> {
     try {
       const response = await apiClient.get<Caso[]>(`/casos/fiscal/${idFiscal}`);
@@ -102,6 +109,7 @@ export class CasoService {
   }
 
   // Obtener casos por estado
+  // Endpoint: GET /api/casos/estado/:idEstado
   async obtenerCasosPorEstado(idEstado: number): Promise<ApiResponse<Caso[]>> {
     try {
       const response = await apiClient.get<Caso[]>(`/casos/estado/${idEstado}`);
@@ -112,6 +120,7 @@ export class CasoService {
   }
 
   // Asignar fiscal a caso
+  // Endpoint: POST /api/casos/:id/asignar-fiscal
   async asignarFiscal(idCaso: number, idFiscal: number): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.post<any>(`/casos/${idCaso}/asignar-fiscal`, { idFiscal });
@@ -122,6 +131,7 @@ export class CasoService {
   }
 
   // Reasignar fiscal de caso
+  // Endpoint: POST /api/casos/:id/reasignar-fiscal
   async reasignarFiscal(idCaso: number, idFiscalNuevo: number): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.post<any>(`/casos/${idCaso}/reasignar-fiscal`, { 
@@ -134,6 +144,7 @@ export class CasoService {
   }
 
   // Obtener estados disponibles
+  // Endpoint: GET /api/casos/estados
   async obtenerEstados(): Promise<ApiResponse<EstadoCaso[]>> {
     try {
       const response = await apiClient.get<EstadoCaso[]>('/casos/estados');
@@ -144,9 +155,10 @@ export class CasoService {
   }
 
   // Obtener fiscales disponibles
+  // Endpoint: GET /api/casos/fiscales (corregido desde /fiscales)
   async obtenerFiscales(): Promise<ApiResponse<Fiscal[]>> {
     try {
-      const response = await apiClient.get<Fiscal[]>('/fiscales');
+      const response = await apiClient.get<Fiscal[]>('/casos/fiscales');
       return response;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al obtener fiscales');
@@ -154,6 +166,7 @@ export class CasoService {
   }
 
   // Obtener estadísticas de casos
+  // Endpoint: GET /api/casos/estadisticas
   async obtenerEstadisticas(): Promise<ApiResponse<EstadisticasCasos>> {
     try {
       const response = await apiClient.get<EstadisticasCasos>('/casos/estadisticas');

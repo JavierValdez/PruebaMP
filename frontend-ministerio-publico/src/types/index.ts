@@ -99,6 +99,16 @@ export interface RegisterForm {
   idFiscalia: number;
 }
 
+export interface ForgotPasswordForm {
+  email: string;
+}
+
+export interface ResetPasswordForm {
+  token: string;
+  password: string;
+  confirmPassword: string;
+}
+
 export interface CasoForm {
   numeroCaso: string;
   titulo: string;
@@ -195,3 +205,52 @@ export interface AppState {
   casos: CasosState;
   notificaciones: Notificacion[];
 }
+
+export interface Informe {
+  idInforme: number;
+  tipoInforme: string;
+  fechaGeneracion: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  estado: string;
+  parametros?: Record<string, any>;
+  idUsuarioGenerador: number;
+}
+
+// Interfaces para Dashboard
+export interface CasoPorEstado {
+  EstadoCaso: string;
+  TotalCasos: number;
+}
+
+export interface CasoPorFiscal {
+  Fiscalia: string;
+  CasosAsignados: number;
+  [key: string]: any;
+}
+
+export interface EstadisticasGenerales {
+  resumen: {
+    totalCasos: number;
+    fiscalesActivos: number;
+    promedioCasosPorFiscal: number;
+  };
+  casosPorEstado: CasoPorEstado[];
+  casosPorFiscal: CasoPorFiscal[];
+}
+
+export interface MetricasAdicionales {
+  casosNuevosEsteMes: number;
+  casosCerradosEsteMes: number;
+  casosPendientes: number;
+  intentosReasignacionFallidosEsteMes: number;
+}
+
+export interface DashboardDataBackend {
+  titulo: string;
+  fechaActualizacion: string;
+  estadisticasGenerales: EstadisticasGenerales;
+  metricas: MetricasAdicionales;
+}
+
+

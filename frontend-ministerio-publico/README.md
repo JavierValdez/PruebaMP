@@ -1,8 +1,27 @@
-# Getting Started with Create React App
+# 🏛️ Frontend - Sistema Ministerio Público
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Frontend React TypeScript para el sistema de gestión del Ministerio Público con autenticación completa y gestión de casos.
 
-## Available Scripts
+## 🔐 Sistema de Autenticación Implementado
+
+✅ **Todos los métodos de autenticación están implementados** según el script de pruebas bash proporcionado.
+
+### 📋 Endpoints Soportados
+- `POST /api/auth/register` - Registro de usuarios
+- `POST /api/auth/login` - Inicio de sesión  
+- `GET /api/auth/verify` - Verificación de token
+- `GET /api/auth/profile` - Obtener perfil de usuario
+- `POST /api/auth/change-password` - Cambio de contraseña
+- `POST /api/auth/refresh` - Refresh de tokens
+- `POST /api/auth/logout` - Cerrar sesión
+- `GET /health` - Health check
+
+### 🧪 Panel de Pruebas
+**Accede al panel de pruebas en:** `http://localhost:3000/auth-test`
+
+Para más información detallada sobre la implementación de autenticación, consulta: [AUTH_README.md](./AUTH_README.md)
+
+## 🚀 Scripts Disponibles
 
 In the project directory, you can run:
 

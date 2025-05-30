@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Paper,
   TextField,
   Button,
   Typography,
@@ -13,6 +12,8 @@ import {
   IconButton,
   Link,
   Divider,
+  CircularProgress,
+  Collapse,
 } from '@mui/material';
 import {
   Visibility,
@@ -20,6 +21,7 @@ import {
   Person,
   Lock,
   Gavel,
+  ErrorOutline,
 } from '@mui/icons-material';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -44,11 +46,15 @@ export const LoginComponent: React.FC = () => {
   const { state: authState, login, clearError } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockTimeRemaining, setBlockTimeRemaining] = useState(0);
 
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
+    setError: setFormError,
   } = useForm<LoginForm>({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -69,12 +75,89 @@ export const LoginComponent: React.FC = () => {
     clearError();
   }, [clearError]);
 
+  // Manejo del bloqueo temporal por intentos fallidos
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isBlocked && blockTimeRemaining > 0) {
+      interval = setInterval(() => {
+        setBlockTimeRemaining((prev) => {
+          if (prev <= 1) {
+            setIsBlocked(false);
+            setLoginAttempts(0);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isBlocked, blockTimeRemaining]);
+
+  const getErrorMessage = (error: string): { message: string; severity: 'error' | 'warning' | 'info' } => {
+    if (error.toLowerCase().includes('usuario') || error.toLowerCase().includes('username')) {
+      return {
+        message: 'Usuario no encontrado. Verifica que el nombre de usuario sea correcto.',
+        severity: 'error'
+      };
+    }
+    if (error.toLowerCase().includes('password') || error.toLowerCase().includes('contraseña')) {
+      return {
+        message: 'Contraseña incorrecta. Si has olvidado tu contraseña, puedes recuperarla.',
+        severity: 'warning'
+      };
+    }
+    if (error.toLowerCase().includes('blocked') || error.toLowerCase().includes('bloqueado')) {
+      return {
+        message: 'Cuenta temporalmente bloqueada por múltiples intentos fallidos.',
+        severity: 'error'
+      };
+    }
+    if (error.toLowerCase().includes('network') || error.toLowerCase().includes('conexión')) {
+      return {
+        message: 'Error de conexión. Verifica tu conexión a internet e intenta nuevamente.',
+        severity: 'warning'
+      };
+    }
+    return {
+      message: error || 'Error desconocido al iniciar sesión',
+      severity: 'error'
+    };
+  };
+
   const onSubmit = async (data: LoginForm) => {
+    if (isBlocked) {
+      return;
+    }
+
     try {
       await login(data.nombreUsuario, data.password);
+      setLoginAttempts(0);
       navigate('/dashboard');
-    } catch (error) {
-      // El error ya se maneja en el contexto
+    } catch (error: any) {
+      const newAttempts = loginAttempts + 1;
+      setLoginAttempts(newAttempts);
+
+      // Bloquear después de 5 intentos fallidos
+      if (newAttempts >= 5) {
+        setIsBlocked(true);
+        setBlockTimeRemaining(300); // 5 minutos
+      }
+
+      // Agregar errores específicos al formulario si es necesario
+      if (error.message.toLowerCase().includes('usuario')) {
+        setFormError('nombreUsuario', {
+          type: 'manual',
+          message: 'Usuario no encontrado'
+        });
+      } else if (error.message.toLowerCase().includes('password')) {
+        setFormError('password', {
+          type: 'manual',
+          message: 'Contraseña incorrecta'
+        });
+      }
+
       console.error('Error en login:', error);
     }
   };
@@ -148,8 +231,30 @@ export const LoginComponent: React.FC = () => {
 
             {/* Mensaje de error */}
             {authState.error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {authState.error}
+              <Collapse in={!!authState.error}>
+                <Alert 
+                  severity={getErrorMessage(authState.error).severity} 
+                  sx={{ mb: 2 }}
+                  icon={<ErrorOutline />}
+                >
+                  {getErrorMessage(authState.error).message}
+                </Alert>
+              </Collapse>
+            )}
+
+            {/* Mensaje de bloqueo temporal */}
+            {isBlocked && (
+              <Alert severity="error" sx={{ mb: 2 }} icon={<ErrorOutline />}>
+                Cuenta bloqueada temporalmente por múltiples intentos fallidos.
+                <br />
+                Tiempo restante: {Math.floor(blockTimeRemaining / 60)}:{(blockTimeRemaining % 60).toString().padStart(2, '0')}
+              </Alert>
+            )}
+
+            {/* Advertencia por intentos fallidos */}
+            {loginAttempts > 0 && loginAttempts < 5 && !authState.error && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                Intento fallido {loginAttempts} de 5. {5 - loginAttempts} intentos restantes.
               </Alert>
             )}
 
@@ -223,10 +328,25 @@ export const LoginComponent: React.FC = () => {
                 fullWidth
                 variant="contained"
                 sx={{ mt: 3, mb: 2, py: 1.5 }}
-                disabled={isSubmitting || authState.loading}
+                disabled={isSubmitting || authState.loading || isBlocked}
               >
-                {isSubmitting || authState.loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                {isSubmitting || authState.loading ? (
+                  <>
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                    Iniciando sesión...
+                  </>
+                ) : isBlocked ? (
+                  `Bloqueado (${Math.floor(blockTimeRemaining / 60)}:${(blockTimeRemaining % 60).toString().padStart(2, '0')})`
+                ) : (
+                  'Iniciar Sesión'
+                )}
               </Button>
+
+              <Box sx={{ textAlign: 'center', mb: 2 }}>
+                <Link component={RouterLink} to="/forgot-password" variant="body2">
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </Box>
 
               <Box sx={{ textAlign: 'center' }}>
                 <Link component={RouterLink} to="/register" variant="body2">

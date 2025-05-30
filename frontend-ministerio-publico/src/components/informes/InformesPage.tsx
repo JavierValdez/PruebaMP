@@ -215,15 +215,13 @@ const InformesPage: React.FC = () => {
                 <DatePicker
                   label="Fecha Inicio"
                   value={filtros.fechaInicio}
-                  onChange={(date) => setFiltros(prev => ({ ...prev, fechaInicio: date }))}
-                  renderInput={(params) => <TextField {...params} />}
+                  onChange={(date: Dayjs | null) => setFiltros(prev => ({ ...prev, fechaInicio: date }))}
                 />
                 
                 <DatePicker
                   label="Fecha Fin"
                   value={filtros.fechaFin}
-                  onChange={(date) => setFiltros(prev => ({ ...prev, fechaFin: date }))}
-                  renderInput={(params) => <TextField {...params} />}
+                  onChange={(date: Dayjs | null) => setFiltros(prev => ({ ...prev, fechaFin: date }))}
                 />
               </Stack>
 

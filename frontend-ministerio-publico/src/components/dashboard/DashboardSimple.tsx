@@ -23,8 +23,9 @@ import {
   CheckCircle,
   Schedule,
 } from '@mui/icons-material';
-import { informeService, DashboardData } from '../../services/informeService';
+import { informeService } from '../../services/informeService';
 import { useAuth } from '../../contexts/AuthContext';
+import { DashboardDataBackend, ApiResponse } from '../../types';
 
 interface StatCardProps {
   title: string;
@@ -72,7 +73,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, subtitle
 
 export const Dashboard: React.FC = () => {
   const { state: authState } = useAuth();
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardDataBackend | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -98,7 +99,11 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const getColorByEstado = (estado: string): 'primary' | 'success' | 'warning' | 'error' => {
+  const getColorByEstado = (estado: string | undefined | null): 'primary' | 'success' | 'warning' | 'error' => {
+    if (!estado || typeof estado !== 'string') {
+      return 'primary';
+    }
+    
     switch (estado.toLowerCase()) {
       case 'cerrado':
       case 'resuelto':
@@ -162,23 +167,23 @@ export const Dashboard: React.FC = () => {
         <Box sx={{ minWidth: 250, flex: 1 }}>
           <StatCard
             title="Total de Casos"
-            value={dashboardData.totalCasos}
+            value={dashboardData.estadisticasGenerales.resumen.totalCasos}
             icon={<Folder />}
             color="primary"
           />
         </Box>
         <Box sx={{ minWidth: 250, flex: 1 }}>
           <StatCard
-            title="Casos Abiertos"
-            value={dashboardData.casosAbiertos}
-            icon={<FolderOpen />}
+            title="Casos Pendientes"
+            value={dashboardData.metricas.casosPendientes}
+            icon={<Schedule />}
             color="warning"
           />
         </Box>
         <Box sx={{ minWidth: 250, flex: 1 }}>
           <StatCard
-            title="Casos Cerrados"
-            value={dashboardData.casosCerrados}
+            title="Casos Cerrados Este Mes"
+            value={dashboardData.metricas.casosCerradosEsteMes}
             icon={<CheckCircle />}
             color="success"
           />
@@ -186,7 +191,7 @@ export const Dashboard: React.FC = () => {
         <Box sx={{ minWidth: 250, flex: 1 }}>
           <StatCard
             title="Fiscales Activos"
-            value={dashboardData.fiscalesActivos}
+            value={dashboardData.estadisticasGenerales.resumen.fiscalesActivos}
             icon={<People />}
             color="info"
           />
@@ -197,36 +202,27 @@ export const Dashboard: React.FC = () => {
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box sx={{ minWidth: 250, flex: 1 }}>
           <StatCard
-            title="Casos Asignados"
-            value={dashboardData.casosAsignados}
-            icon={<Assignment />}
+            title="Casos Nuevos Este Mes"
+            value={dashboardData.metricas.casosNuevosEsteMes}
+            icon={<FolderOpen />}
             color="primary"
           />
         </Box>
         <Box sx={{ minWidth: 250, flex: 1 }}>
           <StatCard
-            title="Sin Asignar"
-            value={dashboardData.casosSinAsignar}
-            icon={<Schedule />}
-            color="error"
+            title="Promedio por Fiscal"
+            value={Math.round(dashboardData.estadisticasGenerales.resumen.promedioCasosPorFiscal)}
+            icon={<Assignment />}
+            color="secondary"
           />
         </Box>
         <Box sx={{ minWidth: 250, flex: 1 }}>
           <StatCard
-            title="Casos Hoy"
-            value={dashboardData.casosHoy}
-            icon={<CalendarToday />}
-            color="success"
-            subtitle="Creados hoy"
-          />
-        </Box>
-        <Box sx={{ minWidth: 250, flex: 1 }}>
-          <StatCard
-            title="Esta Semana"
-            value={dashboardData.casosSemana}
+            title="Reasignaciones Fallidas"
+            value={dashboardData.metricas.intentosReasignacionFallidosEsteMes}
             icon={<TrendingUp />}
-            color="info"
-            subtitle="Casos nuevos"
+            color="error"
+            subtitle="Este mes"
           />
         </Box>
       </Box>
@@ -239,54 +235,66 @@ export const Dashboard: React.FC = () => {
             <CardHeader title="Casos por Estado" />
             <CardContent>
               <List dense>
-                {Object.entries(dashboardData.casosPorEstado).map(([estado, cantidad]) => (
-                  <React.Fragment key={estado}>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Chip
-                          size="small"
-                          label={cantidad}
-                          color={getColorByEstado(estado)}
+                {dashboardData.estadisticasGenerales.casosPorEstado.map((item, index) => {
+                  const estadoCaso = item.EstadoCaso || `Estado ${index + 1}`;
+                  const totalCasos = item.TotalCasos || 0;
+                  const totalGeneral = dashboardData.estadisticasGenerales.resumen.totalCasos || 1;
+                  
+                  return (
+                    <React.Fragment key={item.EstadoCaso || index}>
+                      <ListItem>
+                        <ListItemIcon>
+                          <Chip
+                            size="small"
+                            label={totalCasos}
+                            color={getColorByEstado(estadoCaso)}
+                          />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={estadoCaso}
+                          secondary={`${((totalCasos / totalGeneral) * 100).toFixed(1)}%`}
                         />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={estado}
-                        secondary={`${((cantidad / dashboardData.totalCasos) * 100).toFixed(1)}%`}
-                      />
-                    </ListItem>
-                    <Divider component="li" />
-                  </React.Fragment>
-                ))}
+                      </ListItem>
+                      <Divider component="li" />
+                    </React.Fragment>
+                  );
+                })}
               </List>
             </CardContent>
           </Card>
         </Box>
 
-        {/* Casos por Fiscalía */}
+        {/* Casos por Fiscal */}
         <Box sx={{ minWidth: 400, flex: 1 }}>
           <Card>
-            <CardHeader title="Casos por Fiscalía" />
+            <CardHeader title="Casos por Fiscal" />
             <CardContent>
               <List dense>
-                {Object.entries(dashboardData.casosPorFiscalia).map(([fiscalia, cantidad]) => (
-                  <React.Fragment key={fiscalia}>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Chip
-                          size="small"
-                          label={cantidad}
-                          color="primary"
-                          variant="outlined"
+                {dashboardData.estadisticasGenerales.casosPorFiscal.slice(0, 10).map((item, index) => {
+                  const fiscalia = item.Fiscalia || `Fiscal ${index + 1}`;
+                  const casosAsignados = item.CasosAsignados || 0;
+                  const totalGeneral = dashboardData.estadisticasGenerales.resumen.totalCasos || 1;
+                  
+                  return (
+                    <React.Fragment key={index}>
+                      <ListItem>
+                        <ListItemIcon>
+                          <Chip
+                            size="small"
+                            label={casosAsignados}
+                            color="primary"
+                            variant="outlined"
+                          />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={fiscalia}
+                          secondary={`${((casosAsignados / totalGeneral) * 100).toFixed(1)}%`}
                         />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={fiscalia}
-                        secondary={`${((cantidad / dashboardData.totalCasos) * 100).toFixed(1)}%`}
-                      />
-                    </ListItem>
-                    <Divider component="li" />
-                  </React.Fragment>
-                ))}
+                      </ListItem>
+                      <Divider component="li" />
+                    </React.Fragment>
+                  );
+                })}
               </List>
             </CardContent>
           </Card>

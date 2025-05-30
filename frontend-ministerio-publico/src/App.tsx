@@ -5,8 +5,10 @@ import { CssBaseline, Box } from '@mui/material';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginComponent } from './components/auth/LoginComponent';
 import RegisterComponent from './components/auth/RegisterComponent';
+import { ForgotPasswordComponent } from './components/auth/ForgotPasswordComponent';
 import { Dashboard } from './components/dashboard/DashboardSimple';
 import CasosPage from './components/casos/CasosPage';
+import AuthTestPage from './pages/AuthTestPage';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
 
@@ -73,6 +75,9 @@ const AppContent: React.FC = () => {
       <Route path="/register" element={
         state.isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterComponent />
       } />
+      <Route path="/forgot-password" element={
+        state.isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPasswordComponent />
+      } />
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <MainLayout>
@@ -87,6 +92,7 @@ const AppContent: React.FC = () => {
           </MainLayout>
         </ProtectedRoute>
       } />
+      <Route path="/auth-test" element={<AuthTestPage />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
