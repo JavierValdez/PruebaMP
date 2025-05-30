@@ -210,16 +210,33 @@ class CasoService {
      */
     async asignarFiscal(idCaso, idFiscal, idUsuarioSolicitante) {
         try {
-            await spExecutor.execute('sp_Caso_AsignarFiscal', {
-                IdCaso: idCaso,
-                IdFiscal: idFiscal,
-                IdUsuarioSolicitante: idUsuarioSolicitante
-            });
+            // Usar el mismo procedimiento de reasignación que maneja casos con y sin fiscal anterior
+            const result = await spExecutor.executeWithOutput(
+                'sp_Caso_ReasignarFiscalValidado',
+                {
+                    IdCaso: idCaso,
+                    IdNuevoFiscal: idFiscal,
+                    IdUsuarioSolicitante: idUsuarioSolicitante
+                },
+                [
+                    { name: 'Exito', type: sql.Bit },
+                    { name: 'Mensaje', type: sql.NVarChar(500) }
+                ]
+            );
 
-            return {
-                success: true,
-                message: 'Fiscal asignado exitosamente'
-            };
+            if (result.output.Exito) {
+                return {
+                    success: true,
+                    message: result.output.Mensaje || 'Fiscal asignado exitosamente'
+                };
+            } else {
+                throw {
+                    success: false,
+                    message: result.output.Mensaje || 'Error al asignar fiscal',
+                    code: config.ERROR_CODES.BUSINESS_RULE_VIOLATION,
+                    statusCode: 400
+                };
+            }
 
         } catch (error) {
             console.error('Error en asignarFiscal:', error);
@@ -239,21 +256,22 @@ class CasoService {
                     IdNuevoFiscal: idNuevoFiscal,
                     IdUsuarioSolicitante: idUsuarioSolicitante
                 },
-                [{ name: 'Resultado', type: sql.Int }]
+                [
+                    { name: 'Exito', type: sql.Bit },
+                    { name: 'Mensaje', type: sql.NVarChar(500) }
+                ]
             );
 
-            const resultado = result.output.Resultado;
-            
-            if (resultado === 1) {
+            if (result.output.Exito) {
                 return {
                     success: true,
-                    message: 'Fiscal reasignado exitosamente'
+                    message: result.output.Mensaje || 'Fiscal reasignado exitosamente'
                 };
             } else {
                 throw {
                     success: false,
-                    message: 'No se pudo reasignar el fiscal. Verificar restricciones.',
-                    code: config.ERROR_CODES.VALIDATION_ERROR,
+                    message: result.output.Mensaje || 'No se pudo reasignar el fiscal',
+                    code: config.ERROR_CODES.BUSINESS_RULE_VIOLATION,
                     statusCode: 400
                 };
             }
@@ -311,6 +329,57 @@ class CasoService {
 
         } catch (error) {
             console.error('Error en obtenerCasosPorEstado:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener ID de fiscal por ID de usuario
+     */
+    async obtenerIdFiscalPorUsuario(idUsuario) {
+        try {
+            const query = `
+                SELECT IdFiscal 
+                FROM dbo.Fiscales 
+                WHERE IdUsuario = @IdUsuario AND Activo = 1
+            `;
+
+            const result = await spExecutor.query(query, { IdUsuario: idUsuario });
+            
+            if (!result.recordset || result.recordset.length === 0) {
+                throw {
+                    success: false,
+                    message: 'El usuario no es un fiscal activo',
+                    code: config.ERROR_CODES.NOT_FOUND,
+                    statusCode: 404
+                };
+            }
+
+            return result.recordset[0].IdFiscal;
+
+        } catch (error) {
+            console.error('Error en obtenerIdFiscalPorUsuario:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener casos asignados a un usuario fiscal
+     */
+    async obtenerMisCasos(idUsuario, pagina = 1, resultadosPorPagina = config.DEFAULT_PAGE_SIZE) {
+        try {
+            // Primero obtener el ID del fiscal
+            const idFiscal = await this.obtenerIdFiscalPorUsuario(idUsuario);
+            
+            // Luego obtener los casos asignados
+            return await this.listarCasos({
+                pagina,
+                resultadosPorPagina,
+                idFiscalAsignadoFiltro: idFiscal
+            });
+
+        } catch (error) {
+            console.error('Error en obtenerMisCasos:', error);
             throw error;
         }
     }

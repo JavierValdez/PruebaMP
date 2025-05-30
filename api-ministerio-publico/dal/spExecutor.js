@@ -129,6 +129,17 @@ class SPExecutor {
             output: result.output
         };
     }
+
+    /**
+     * Alias para query() - ejecuta una consulta SQL directa
+     * @param {string} query - Consulta SQL
+     * @param {Object} parameters - Parámetros de la consulta
+     * @returns {Promise<Array>} - Array de registros
+     */
+    async executeQuery(query, parameters = {}) {
+        const result = await this.query(query, parameters);
+        return result.recordset || [];
+    }
 }
 
 module.exports = new SPExecutor();

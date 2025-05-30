@@ -1232,18 +1232,5 @@ PRINT '=========================================================================
 PRINT 'Creación de Procedimientos Almacenados completada.';
 PRINT '============================================================================';
 
--- Crear usuario para la aplicación
-CREATE LOGIN AppUser WITH PASSWORD = 'admin1234';
-GO
 
-CREATE USER AppUser FOR LOGIN AppUser;
-GO
-
--- Asignar permisos al usuario
-ALTER ROLE db_owner ADD MEMBER AppUser;
-GO
-
-PRINT '============================================================================';
-PRINT 'Creación de la estructura de la base de datos completada.';
-PRINT '============================================================================';
 GO

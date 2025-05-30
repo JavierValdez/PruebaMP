@@ -11,6 +11,7 @@ const { errorHandler, notFoundHandler } = require('./middlewares/errorHandler');
 // Importar rutas
 const authRoutes = require('./routes/authRoutes');
 const casoRoutes = require('./routes/casoRoutes');
+const informeRoutes = require('./routes/informeRoutes');
 
 class Server {
     constructor() {
@@ -57,6 +58,7 @@ class Server {
         // Rutas principales
         this.app.use('/api/auth', authRoutes);
         this.app.use('/api/casos', casoRoutes);
+        this.app.use('/api/informes', informeRoutes);
 
         // Ruta raíz con información de la API
         this.app.get('/', (req, res) => {
@@ -68,7 +70,8 @@ class Server {
                 health: '/health',
                 endpoints: {
                     auth: '/api/auth',
-                    casos: '/api/casos'
+                    casos: '/api/casos',
+                    informes: '/api/informes'
                 }
             });
         });
@@ -107,6 +110,18 @@ class Server {
                             'GET /estado/:idEstado - Casos por estado',
                             'POST /:id/asignar-fiscal - Asignar fiscal',
                             'POST /:id/reasignar-fiscal - Reasignar fiscal'
+                        ]
+                    },
+                    informes: {
+                        base: '/api/informes',
+                        routes: [
+                            'GET /dashboard - Dashboard con métricas principales',
+                            'GET /estadisticas - Estadísticas generales del sistema',
+                            'GET /casos-por-estado - Informe de casos por estado',
+                            'GET /casos-por-fiscal - Informe de casos por fiscal',
+                            'GET /productividad-fiscalias - Productividad por fiscalía',
+                            'GET /reasignaciones-fallidas - Reasignaciones fallidas',
+                            'GET /exportar/:tipo - Exportar informes'
                         ]
                     }
                 },

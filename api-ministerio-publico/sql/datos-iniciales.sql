@@ -1,7 +1,7 @@
 -- Procedimiento adicional para obtener permisos de usuario
 -- Este SP debe ejecutarse después del script principal setup.sql
 
-USE PruebaMPDB2;
+USE master;
 GO
 
 PRINT 'Creando SP adicional: sp_Usuario_ObtenerPermisos...';
@@ -47,6 +47,12 @@ IF NOT EXISTS (SELECT 1 FROM dbo.EstadosCaso WHERE NombreEstado = 'Suspendido')
 BEGIN
     INSERT INTO dbo.EstadosCaso (NombreEstado, DescripcionEstado) 
     VALUES ('Suspendido', 'Caso suspendido temporalmente');
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.EstadosCaso WHERE NombreEstado = 'Pendiente')
+BEGIN
+    INSERT INTO dbo.EstadosCaso (NombreEstado, DescripcionEstado) 
+    VALUES ('Pendiente', 'Caso pendiente de asignación o procesamiento');
 END
 
 -- Fiscalías iniciales
@@ -185,4 +191,139 @@ WHERE ClavePermiso IN ('CASE_VIEW', 'CASE_VIEW_ALL', 'CASE_EDIT', 'CASE_ASSIGN',
 AND NOT EXISTS (SELECT 1 FROM dbo.RolPermisos WHERE IdRol = @IdRolSupervisor AND IdPermiso = dbo.Permisos.IdPermiso);
 
 PRINT 'Datos iniciales insertados exitosamente.';
+GO
+
+-- ============================================================================
+-- DATOS DE PRUEBA PARA TESTING
+-- ============================================================================
+
+PRINT 'Insertando datos de prueba...';
+GO
+
+-- Usuarios de prueba
+DECLARE @IdRolAdmin INT = (SELECT IdRol FROM dbo.Roles WHERE NombreRol = 'Administrador');
+DECLARE @IdRolFiscal INT = (SELECT IdRol FROM dbo.Roles WHERE NombreRol = 'Fiscal');
+DECLARE @IdRolSupervisor INT = (SELECT IdRol FROM dbo.Roles WHERE NombreRol = 'Supervisor');
+
+-- Usuario Administrador
+IF NOT EXISTS (SELECT 1 FROM dbo.Usuarios WHERE NombreUsuario = 'admin')
+BEGIN
+    INSERT INTO dbo.Usuarios (NombreUsuario, PasswordHash, Email, PrimerNombre, PrimerApellido)
+    VALUES ('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@mp.gob.sv', 'Administrador', 'Sistema');
+    
+    DECLARE @IdUsuarioAdmin INT = SCOPE_IDENTITY();
+    INSERT INTO dbo.UsuarioRoles (IdUsuario, IdRol) VALUES (@IdUsuarioAdmin, @IdRolAdmin);
+END
+
+-- Fiscales de prueba
+IF NOT EXISTS (SELECT 1 FROM dbo.Usuarios WHERE NombreUsuario = 'fiscal1')
+BEGIN
+    INSERT INTO dbo.Usuarios (NombreUsuario, PasswordHash, Email, PrimerNombre, PrimerApellido)
+    VALUES ('fiscal1', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'fiscal1@mp.gob.sv', 'Juan Carlos', 'Martínez');
+    
+    DECLARE @IdUsuarioFiscal1 INT = SCOPE_IDENTITY();
+    INSERT INTO dbo.UsuarioRoles (IdUsuario, IdRol) VALUES (@IdUsuarioFiscal1, @IdRolFiscal);
+    
+    DECLARE @IdFiscalia1 INT = (SELECT IdFiscalia FROM dbo.Fiscalias WHERE NombreFiscalia = 'Fiscalía Central');
+    INSERT INTO dbo.Fiscales (IdUsuario, CodigoFiscal, IdFiscalia)
+    VALUES (@IdUsuarioFiscal1, 'FC-001', @IdFiscalia1);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Usuarios WHERE NombreUsuario = 'fiscal2')
+BEGIN
+    INSERT INTO dbo.Usuarios (NombreUsuario, PasswordHash, Email, PrimerNombre, PrimerApellido)
+    VALUES ('fiscal2', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'fiscal2@mp.gob.sv', 'María Elena', 'Rodríguez');
+    
+    DECLARE @IdUsuarioFiscal2 INT = SCOPE_IDENTITY();
+    INSERT INTO dbo.UsuarioRoles (IdUsuario, IdRol) VALUES (@IdUsuarioFiscal2, @IdRolFiscal);
+    
+    INSERT INTO dbo.Fiscales (IdUsuario, CodigoFiscal, IdFiscalia)
+    VALUES (@IdUsuarioFiscal2, 'FC-002', @IdFiscalia1);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Usuarios WHERE NombreUsuario = 'fiscal3')
+BEGIN
+    INSERT INTO dbo.Usuarios (NombreUsuario, PasswordHash, Email, PrimerNombre, PrimerApellido)
+    VALUES ('fiscal3', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'fiscal3@mp.gob.sv', 'Carlos Alberto', 'Hernández');
+    
+    DECLARE @IdUsuarioFiscal3 INT = SCOPE_IDENTITY();
+    INSERT INTO dbo.UsuarioRoles (IdUsuario, IdRol) VALUES (@IdUsuarioFiscal3, @IdRolFiscal);
+    
+    DECLARE @IdFiscalia2 INT = (SELECT IdFiscalia FROM dbo.Fiscalias WHERE NombreFiscalia = 'Fiscalía Norte');
+    INSERT INTO dbo.Fiscales (IdUsuario, CodigoFiscal, IdFiscalia)
+    VALUES (@IdUsuarioFiscal3, 'FN-001', @IdFiscalia2);
+END
+
+-- Supervisor de prueba
+IF NOT EXISTS (SELECT 1 FROM dbo.Usuarios WHERE NombreUsuario = 'supervisor1')
+BEGIN
+    INSERT INTO dbo.Usuarios (NombreUsuario, PasswordHash, Email, PrimerNombre, PrimerApellido)
+    VALUES ('supervisor1', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'supervisor1@mp.gob.sv', 'Ana Sofía', 'López');
+    
+    DECLARE @IdUsuarioSupervisor INT = SCOPE_IDENTITY();
+    INSERT INTO dbo.UsuarioRoles (IdUsuario, IdRol) VALUES (@IdUsuarioSupervisor, @IdRolSupervisor);
+END
+
+-- Casos de prueba
+DECLARE @IdEstadoAbierto INT = (SELECT IdEstadoCaso FROM dbo.EstadosCaso WHERE NombreEstado = 'Abierto');
+DECLARE @IdEstadoPendiente INT = (SELECT IdEstadoCaso FROM dbo.EstadosCaso WHERE NombreEstado = 'Pendiente');
+DECLARE @IdEstadoEnProceso INT = (SELECT IdEstadoCaso FROM dbo.EstadosCaso WHERE NombreEstado = 'En Proceso');
+DECLARE @IdEstadoCerrado INT = (SELECT IdEstadoCaso FROM dbo.EstadosCaso WHERE NombreEstado = 'Cerrado');
+
+DECLARE @IdFiscal1 INT = (SELECT IdFiscal FROM dbo.Fiscales WHERE CodigoFiscal = 'FC-001');
+DECLARE @IdFiscal2 INT = (SELECT IdFiscal FROM dbo.Fiscales WHERE CodigoFiscal = 'FC-002');
+DECLARE @IdFiscal3 INT = (SELECT IdFiscal FROM dbo.Fiscales WHERE CodigoFiscal = 'FN-001');
+
+DECLARE @IdUsuarioCreador INT = (SELECT IdUsuario FROM dbo.Usuarios WHERE NombreUsuario = 'admin');
+
+-- Casos de prueba
+IF NOT EXISTS (SELECT 1 FROM dbo.Casos WHERE NumeroCasoUnico = 'MP-2024-001')
+BEGIN
+    INSERT INTO dbo.Casos (NumeroCasoUnico, Descripcion, IdEstadoCaso, DetalleProgreso, IdFiscalAsignado, IdUsuarioCreacion, IdUsuarioUltimaModificacion)
+    VALUES ('MP-2024-001', 'Caso de robo con intimidación en zona central', @IdEstadoAbierto, 'Caso recién abierto, recopilando evidencias iniciales', @IdFiscal1, @IdUsuarioCreador, @IdUsuarioCreador);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Casos WHERE NumeroCasoUnico = 'MP-2024-002')
+BEGIN
+    INSERT INTO dbo.Casos (NumeroCasoUnico, Descripcion, IdEstadoCaso, DetalleProgreso, IdFiscalAsignado, IdUsuarioCreacion, IdUsuarioUltimaModificacion)
+    VALUES ('MP-2024-002', 'Investigación por fraude financiero', @IdEstadoEnProceso, 'Análisis de documentos bancarios en curso', @IdFiscal1, @IdUsuarioCreador, @IdUsuarioCreador);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Casos WHERE NumeroCasoUnico = 'MP-2024-003')
+BEGIN
+    INSERT INTO dbo.Casos (NumeroCasoUnico, Descripcion, IdEstadoCaso, DetalleProgreso, IdFiscalAsignado, IdUsuarioCreacion, IdUsuarioUltimaModificacion)
+    VALUES ('MP-2024-003', 'Caso de violencia doméstica', @IdEstadoPendiente, 'Pendiente de asignación de fiscal especializado', NULL, @IdUsuarioCreador, @IdUsuarioCreador);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Casos WHERE NumeroCasoUnico = 'MP-2024-004')
+BEGIN
+    INSERT INTO dbo.Casos (NumeroCasoUnico, Descripcion, IdEstadoCaso, DetalleProgreso, IdFiscalAsignado, IdUsuarioCreacion, IdUsuarioUltimaModificacion)
+    VALUES ('MP-2024-004', 'Delito de corrupción en institución pública', @IdEstadoEnProceso, 'Investigación de irregularidades administrativas', @IdFiscal2, @IdUsuarioCreador, @IdUsuarioCreador);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Casos WHERE NumeroCasoUnico = 'MP-2024-005')
+BEGIN
+    INSERT INTO dbo.Casos (NumeroCasoUnico, Descripcion, IdEstadoCaso, DetalleProgreso, IdFiscalAsignado, IdUsuarioCreacion, IdUsuarioUltimaModificacion)
+    VALUES ('MP-2024-005', 'Homicidio en zona norte', @IdEstadoAbierto, 'Investigación criminalística iniciada', @IdFiscal3, @IdUsuarioCreador, @IdUsuarioCreador);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Casos WHERE NumeroCasoUnico = 'MP-2024-006')
+BEGIN
+    INSERT INTO dbo.Casos (NumeroCasoUnico, Descripcion, IdEstadoCaso, DetalleProgreso, IdFiscalAsignado, IdUsuarioCreacion, IdUsuarioUltimaModificacion)
+    VALUES ('MP-2024-006', 'Caso de tráfico de drogas resuelto', @IdEstadoCerrado, 'Caso cerrado con sentencia condenatoria', @IdFiscal2, @IdUsuarioCreador, @IdUsuarioCreador);
+END
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Casos WHERE NumeroCasoUnico = 'MP-2024-007')
+BEGIN
+    INSERT INTO dbo.Casos (NumeroCasoUnico, Descripcion, IdEstadoCaso, DetalleProgreso, IdFiscalAsignado, IdUsuarioCreacion, IdUsuarioUltimaModificacion)
+    VALUES ('MP-2024-007', 'Estafa mediante medios electrónicos', @IdEstadoPendiente, 'Caso pendiente de revisión técnica', NULL, @IdUsuarioCreador, @IdUsuarioCreador);
+END
+
+PRINT 'Datos de prueba insertados exitosamente.';
+PRINT 'Credenciales de prueba:';
+PRINT '- admin/password (Administrador)';
+PRINT '- fiscal1/password (Fiscal - Fiscalía Central)';
+PRINT '- fiscal2/password (Fiscal - Fiscalía Central)';
+PRINT '- fiscal3/password (Fiscal - Fiscalía Norte)';
+PRINT '- supervisor1/password (Supervisor)';
 GO

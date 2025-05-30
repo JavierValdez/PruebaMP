@@ -209,14 +209,12 @@ class CasoController {
             });
         }
 
-        // Aquí deberías obtener el ID del fiscal basado en el usuario actual
-        // Por simplicidad, asumimos que tienes un método para esto
-        // const idFiscal = await obtenerIdFiscalPorUsuario(req.user.idUsuario);
-        
-        return res.status(501).json({
-            success: false,
-            message: 'Funcionalidad pendiente de implementar: obtener ID fiscal del usuario'
-        });
+        const result = await casoService.obtenerMisCasos(
+            req.user.idUsuario,
+            parseInt(pagina),
+            parseInt(resultadosPorPagina)
+        );
+        res.json(result);
     });
 
     /**
@@ -224,11 +222,10 @@ class CasoController {
      * GET /api/casos/estadisticas
      */
     obtenerEstadisticas = asyncHandler(async (req, res) => {
-        // Esta sería una funcionalidad adicional para dashboard
-        return res.status(501).json({
-            success: false,
-            message: 'Funcionalidad pendiente de implementar: estadísticas de casos'
-        });
+        // Redirigir a la nueva funcionalidad de informes
+        const informeService = require('../services/informeService');
+        const result = await informeService.obtenerEstadisticasGenerales();
+        res.json(result);
     });
 }
 
