@@ -22,7 +22,7 @@ export const transformarCasoAPI = (casoAPI: CasoAPI): Caso => {
     fechaCreacion: casoAPI.FechaCreacion,
     fechaAsignacion: casoAPI.FechaAsignacion,
     idEstado: casoAPI.IdEstadoCaso || 1, // Default estado si no viene
-    idFiscalAsignado: casoAPI.IdFiscalAsignado,
+    idFiscalAsignado: casoAPI.IdFiscalAsignado || undefined,
     idUsuarioCreador: casoAPI.IdUsuarioCreador || 0,
     // Campos adicionales opcionales
     fiscal: (casoAPI.FiscalPrimerNombre && casoAPI.FiscalPrimerApellido) ? {

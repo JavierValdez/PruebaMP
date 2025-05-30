@@ -25,6 +25,7 @@ import {
 } from '@mui/icons-material';
 import { informeService } from '../../services/informeService';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePermisos } from '../../hooks/usePermisos';
 import { DashboardDataBackend, ApiResponse } from '../../types';
 
 interface StatCardProps {
@@ -72,7 +73,8 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, subtitle
 );
 
 export const Dashboard: React.FC = () => {
-  const { state: authState } = useAuth();
+  const { state } = useAuth();
+  const { permisos, user, isAuthenticated } = usePermisos();
   const [dashboardData, setDashboardData] = useState<DashboardDataBackend | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -158,7 +160,7 @@ export const Dashboard: React.FC = () => {
           Dashboard
         </Typography>
         <Typography variant="body1" color="textSecondary">
-          Bienvenido, {authState.user?.primerNombre} {authState.user?.primerApellido}
+          Bienvenido, {state.user?.primerNombre} {state.user?.primerApellido}
         </Typography>
       </Box>
 

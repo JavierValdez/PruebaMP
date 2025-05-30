@@ -9,6 +9,8 @@ import { ForgotPasswordComponent } from './components/auth/ForgotPasswordCompone
 import { Dashboard } from './components/dashboard/DashboardSimple';
 import CasosPage from './components/casos/CasosPage';
 import CasosListPage from './pages/CasosListPage';
+import CasoFormPage from './pages/CasoFormPage';
+import CasoDetailPage from './pages/CasoDetailPage';
 import AuthTestPage from './pages/AuthTestPage';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
@@ -103,24 +105,21 @@ const AppContent: React.FC = () => {
       <Route path="/casos/nuevo" element={
         <ProtectedRoute>
           <MainLayout>
-            {/* Aquí iría el componente para crear nuevo caso */}
-            <div>Crear Nuevo Caso - Por implementar</div>
+            <CasoFormPage />
           </MainLayout>
         </ProtectedRoute>
       } />
       <Route path="/casos/:id" element={
         <ProtectedRoute>
           <MainLayout>
-            {/* Aquí iría el componente para ver detalle del caso */}
-            <div>Detalle del Caso - Por implementar</div>
+            <CasoDetailPage />
           </MainLayout>
         </ProtectedRoute>
       } />
       <Route path="/casos/editar/:id" element={
         <ProtectedRoute>
           <MainLayout>
-            {/* Aquí iría el componente para editar caso */}
-            <div>Editar Caso - Por implementar</div>
+            <CasoFormPage />
           </MainLayout>
         </ProtectedRoute>
       } />

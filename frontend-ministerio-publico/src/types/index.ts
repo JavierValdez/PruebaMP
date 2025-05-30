@@ -111,10 +111,11 @@ export interface ResetPasswordForm {
 
 export interface CasoForm {
   numeroCaso: string;
-  titulo: string;
-  descripcion?: string;
+  titulo?: string;
+  descripcion: string;
   idEstado: number;
-  idFiscalAsignado?: number;
+  idFiscalAsignado?: number | null;
+  detalleProgreso?: string;
 }
 
 export interface ChangePasswordForm {
@@ -152,13 +153,19 @@ export interface CasoAPI {
   Descripcion?: string;
   Titulo?: string;
   FechaCreacion: string;
+  FechaUltimaActualizacion?: string;
   FechaAsignacion?: string;
   IdEstadoCaso?: number;
-  IdFiscalAsignado?: number;
-  IdUsuarioCreador?: number;
   NombreEstadoCaso?: string;
+  DetalleProgreso?: string;
+  IdFiscalAsignado?: number;
   FiscalPrimerNombre?: string;
   FiscalPrimerApellido?: string;
+  FiscalNombreUsuario?: string;
+  FiscalNombreFiscalia?: string;
+  IdUsuarioCreador?: number;
+  UsuarioCreacionNombreUsuario?: string;
+  UsuarioModificacionNombreUsuario?: string;
 }
 
 export interface PaginatedResponseAPI<T> {

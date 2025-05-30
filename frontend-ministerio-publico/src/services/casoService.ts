@@ -71,8 +71,23 @@ export class CasoService {
   // Endpoint: GET /api/casos/:id
   async obtenerCaso(id: number): Promise<ApiResponse<Caso>> {
     try {
-      const response = await apiClient.get<Caso>(`/casos/${id}`);
-      return response;
+      const response = await apiClient.get<CasoAPI>(`/casos/${id}`);
+      
+      if (response.success && response.data) {
+        // Transform API response to frontend format
+        const transformedData = transformarCasoAPI(response.data);
+        return {
+          success: true,
+          data: transformedData,
+          message: response.message
+        };
+      }
+      
+      return {
+        success: false,
+        data: undefined,
+        message: response.message || 'Error al obtener caso'
+      };
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al obtener caso');
     }
@@ -82,8 +97,23 @@ export class CasoService {
   // Endpoint: POST /api/casos
   async crearCaso(caso: CasoForm): Promise<ApiResponse<Caso>> {
     try {
-      const response = await apiClient.post<Caso>('/casos', caso);
-      return response;
+      const response = await apiClient.post<CasoAPI>('/casos', caso);
+      
+      if (response.success && response.data) {
+        // Transform API response to frontend format
+        const transformedData = transformarCasoAPI(response.data);
+        return {
+          success: true,
+          data: transformedData,
+          message: response.message
+        };
+      }
+      
+      return {
+        success: false,
+        data: undefined,
+        message: response.message || 'Error al crear caso'
+      };
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al crear caso');
     }
@@ -93,8 +123,23 @@ export class CasoService {
   // Endpoint: PUT /api/casos/:id
   async actualizarCaso(id: number, caso: Partial<CasoForm>): Promise<ApiResponse<Caso>> {
     try {
-      const response = await apiClient.put<Caso>(`/casos/${id}`, caso);
-      return response;
+      const response = await apiClient.put<CasoAPI>(`/casos/${id}`, caso);
+      
+      if (response.success && response.data) {
+        // Transform API response to frontend format
+        const transformedData = transformarCasoAPI(response.data);
+        return {
+          success: true,
+          data: transformedData,
+          message: response.message
+        };
+      }
+      
+      return {
+        success: false,
+        data: undefined,
+        message: response.message || 'Error al actualizar caso'
+      };
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al actualizar caso');
     }
@@ -104,8 +149,23 @@ export class CasoService {
   // Endpoint: GET /api/casos/buscar?termino=XXX
   async buscarCasos(termino: string): Promise<ApiResponse<Caso[]>> {
     try {
-      const response = await apiClient.get<Caso[]>('/casos/buscar', { termino });
-      return response;
+      const response = await apiClient.get<CasoAPI[]>('/casos/buscar', { termino });
+      
+      if (response.success && response.data) {
+        // Transform API response to frontend format
+        const transformedData = response.data.map(transformarCasoAPI);
+        return {
+          success: true,
+          data: transformedData,
+          message: response.message
+        };
+      }
+      
+      return {
+        success: false,
+        data: undefined,
+        message: response.message || 'Error al buscar casos'
+      };
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al buscar casos');
     }
@@ -115,8 +175,23 @@ export class CasoService {
   // Endpoint: GET /api/casos/mis-casos
   async obtenerMisCasos(): Promise<ApiResponse<Caso[]>> {
     try {
-      const response = await apiClient.get<Caso[]>('/casos/mis-casos');
-      return response;
+      const response = await apiClient.get<CasoAPI[]>('/casos/mis-casos');
+      
+      if (response.success && response.data) {
+        // Transform API response to frontend format
+        const transformedData = response.data.map(transformarCasoAPI);
+        return {
+          success: true,
+          data: transformedData,
+          message: response.message
+        };
+      }
+      
+      return {
+        success: false,
+        data: undefined,
+        message: response.message || 'Error al obtener mis casos'
+      };
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al obtener mis casos');
     }
@@ -126,8 +201,23 @@ export class CasoService {
   // Endpoint: GET /api/casos/fiscal/:idFiscal
   async obtenerCasosPorFiscal(idFiscal: number): Promise<ApiResponse<Caso[]>> {
     try {
-      const response = await apiClient.get<Caso[]>(`/casos/fiscal/${idFiscal}`);
-      return response;
+      const response = await apiClient.get<CasoAPI[]>(`/casos/fiscal/${idFiscal}`);
+      
+      if (response.success && response.data) {
+        // Transform API response to frontend format
+        const transformedData = response.data.map(transformarCasoAPI);
+        return {
+          success: true,
+          data: transformedData,
+          message: response.message
+        };
+      }
+      
+      return {
+        success: false,
+        data: undefined,
+        message: response.message || 'Error al obtener casos del fiscal'
+      };
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al obtener casos del fiscal');
     }
@@ -137,8 +227,23 @@ export class CasoService {
   // Endpoint: GET /api/casos/estado/:idEstado
   async obtenerCasosPorEstado(idEstado: number): Promise<ApiResponse<Caso[]>> {
     try {
-      const response = await apiClient.get<Caso[]>(`/casos/estado/${idEstado}`);
-      return response;
+      const response = await apiClient.get<CasoAPI[]>(`/casos/estado/${idEstado}`);
+      
+      if (response.success && response.data) {
+        // Transform API response to frontend format
+        const transformedData = response.data.map(transformarCasoAPI);
+        return {
+          success: true,
+          data: transformedData,
+          message: response.message
+        };
+      }
+      
+      return {
+        success: false,
+        data: undefined,
+        message: response.message || 'Error al obtener casos por estado'
+      };
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al obtener casos por estado');
     }
@@ -148,7 +253,10 @@ export class CasoService {
   // Endpoint: POST /api/casos/:id/asignar-fiscal
   async asignarFiscal(idCaso: number, idFiscal: number): Promise<ApiResponse<any>> {
     try {
-      const response = await apiClient.post<any>(`/casos/${idCaso}/asignar-fiscal`, { idFiscal });
+      const response = await apiClient.post<any>(`/casos/${idCaso}/asignar-fiscal`, { 
+        idCaso,
+        idFiscal 
+      });
       return response;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error al asignar fiscal');
@@ -160,6 +268,7 @@ export class CasoService {
   async reasignarFiscal(idCaso: number, idFiscalNuevo: number): Promise<ApiResponse<any>> {
     try {
       const response = await apiClient.post<any>(`/casos/${idCaso}/reasignar-fiscal`, { 
+        idCaso,
         idFiscalNuevo 
       });
       return response;
